@@ -1,10 +1,9 @@
 -- KOZMOZ Hub - build by Kozmoz Group
- 
-lrs = game:GetService("ReplicatedStorage")  
+
+lrs = game:GetService("ReplicatedStorage")
 
 u = loadstring(game:HttpGet(('https://raw.githubusercontent.com/fiiremax/Scripts/refs/heads/master/Scriptnew/GitHub/Scripts/Module.lua')))()
-loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() 
-
+loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
 
 var      = getgenv().var
 w        = workspace
@@ -537,70 +536,9 @@ Window = Library:CreateWindow({
     AutoShow = true,
     CornerRadius = 15,
 })
--- [KOZMOZ] Hub logosu bazen pencerenin SOL USTUNDE kucuk bir kare olarak
--- gorunuyordu (kutuphanenin baslik cubugu sola yasli). Ikon ve baslik yazi
--- artik baslik cubugunun ORTASINDA tek grup olarak duruyor. Kutuphane
--- yapisi degisirse pcall sayesinde hata olmaz, eski duzen oldugu gibi kalir.
-do
-    -- [KOZMOZ] HATA DUZELTMESI: bu blok daha once HIC calismiyordu.
-    --  1) typeof(x) bir instance icin SINIF ADINI dondurur ("Frame"); "Instance"
-    --     DEGIL. "typeof(kozTop) ~= \"Instance\"" kosulu bu yuzden daima true idi
-    --     ve dongu her adayda continue ile atliyordu (logo sol ustte kaliyordu).
-    --  2) Obsidian pencere nesnesinde "Main"/"Base" alani yok; kutuphane yalnizca
-    --     "Window.MainFrame" veriyor (Library.lua: Window.MainFrame = MainFrame).
-    --  3) Kutuphane ikon + basligi zaten TitleHolder icindeki bir UIListLayout ile
-    --     KENDI ICINDE ortaliyor; asil sorun holder'in TopBar'da sola yasli sabit
-    --     genislikli bir blok olmasi. O yuzden kendi merkez cercevemizi kurmak
-    --     yerine kutuphanenin kendi holder'ini ortaya asiyoruz: kutuphanenin
-    --     listesi geri kalan isi (yatay/dikey ortalama + padding) zaten yapiyor.
-    local kozBrandAsset = "83405026470410"
-    local kozBrandTitle = "KOZMOZ"
-    local kozCenteredHeader = false
-    -- [KOZMOZ] HATA DUZELTMESI: bosluklu (nil iceren) tablo UZERINE ipairs
-    -- ilk nil'de durdugu icin ikinci aday hic denetlenmiyordu; adaylar artik
-    -- yalnizca gecerliyse ekleniyor (liste hicbir zaman bosluk icermiyor).
-    local kozCandidates = {}
-    local function kozAddCandidate(v)
-        local kozIsInstance = type(v) == "userdata"
-            or (type(v) == "table" and v.GetDescendants ~= nil)
-        if v and kozIsInstance then
-            kozCandidates[#kozCandidates + 1] = v
-        end
-    end
-    kozAddCandidate(Window and Window.MainFrame)
-    kozAddCandidate(Library and Library.Window and Library.Window.MainFrame)
-    kozAddCandidate(Window and Window.Main)
-    kozAddCandidate(Window and Window.Base)
-    for _, kozTop in ipairs(kozCandidates) do
-        if not kozCenteredHeader then
-            local kozHeaderIcon, kozTitleLabel = nil, nil
-            pcall(function()
-                for _, inst in ipairs(kozTop:GetDescendants()) do
-                    if not kozHeaderIcon and (inst:IsA("ImageLabel") or inst:IsA("ImageButton"))
-                        and type(inst.Image) == "string"
-                        and string.find(inst.Image, kozBrandAsset, 1, true) then
-                        kozHeaderIcon = inst
-                    end
-                    if not kozTitleLabel and inst:IsA("TextLabel") and inst.Text == kozBrandTitle then
-                        kozTitleLabel = inst
-                    end
-                end
-            end)
-            local kozHeaderHolder = (kozHeaderIcon and kozHeaderIcon.Parent) or (kozTitleLabel and kozTitleLabel.Parent)
-            if kozHeaderHolder and kozHeaderHolder.Name ~= "KozmozCenteredTitle" then
-                local ok = pcall(function()
-                    kozHeaderHolder.Name = "KozmozCenteredTitle"
-                    kozHeaderHolder.AnchorPoint = Vector2.new(0.5, 0)
-                    kozHeaderHolder.Position = UDim2.new(0.5, 0, 0, 0)
-                    kozHeaderHolder.BackgroundTransparency = 1
-                end)
-                kozCenteredHeader = ok and true or false
-            end
-        end
-    end
-end
-
-
+-- [KOZMOZ UI] Baslik grubunu ortaya tasimiyoruz. Obsidian'in kendi
+-- sol ust TitleHolder'i logoyu dar/genis yan cubukta dogru konumda tutar.
+-- CreateWindow.Icon mevcut Kozmoz logosunu (83405026470410) kullanir.
 
 Players = game:GetService("Players")
 player = Players.LocalPlayer
@@ -650,8 +588,9 @@ end
 coinImage = coinsDisplay:FindFirstChild("CoinImage")
 coinsText = coinsDisplay:FindFirstChild("Coins")
 
+-- [KOZMOZ UI] Coin miktarina dokunmadan yanindaki ozel logoyu gizle.
 if coinImage then
-    coinImage.Image = "rbxassetid://86774413657183"
+    coinImage.Visible = false
 end
 
 if coinsText then
@@ -893,11 +832,8 @@ KozmozT.marqueeLabel = KozmozT.marqueeGroupbox:AddLabel(
 KozmozT.marqueeText = "KOZMOZ HUB"
 
 player = Services.Players.LocalPlayer
--- [KOZMOZ] "Discord.gg/KseezeEjc" basligi kaldirildi, yerine
--- "Greetings" yazisi geldi. Kullanici istegi: basliktaki taclik IKONU de
--- kaldirildi (kutuphane ikonsuz kutu basligini destekliyor: GetCustomIcon
--- nil donerse ikon etiketi hic olusturulmuyor).
-LeftGroupbox = Tabs.MainTab:AddLeftGroupbox("Greetings")
+-- [KOZMOZ UI] Greetings basliginin onunde tac ikonu.
+LeftGroupbox = Tabs.MainTab:AddLeftGroupbox("Greetings", "crown")
 
 userId = player.UserId
 
@@ -4266,232 +4202,127 @@ ThirdPartyLeft:AddToggle("ThirdPartyAntiKick", {
     end,
 })
 
--- [KOZMOZ] "Give Anti Grab" - musa(4) 23815-23869 mantigi + kullanicinin
--- tarif ettigi karsi-koruma davranisi:
---  * korudugum oyuncunun parcalarinda PartOwner (= "beni tutan kisi")
---    goruldugu an tepki baslar; her korunan oyuncunun kendi gorevi var,
---  * tepki SALDIRIGANA degil, DOGRUDAN SECILEN OYUNCUYA yonelik: once onun
---    yanina tek CFrame atimiyla isinlanir (en hizli yol; lerp/yol yok),
---  * zaten yanindaysa isinlama HIC atilmaz, dogrudan dokunmaya gecilir,
---  * varir varmaz secilen oyuncuya CreateGrabLine + SetNetworkOwner + kisa
---    itis: oyun tek tutucu tanidigi icin saldirganin tutusu duser,
---  * saldirgan birakana kadar 0.02 sn'de bir tekrar; her uc denemede bir
---    de zorla biraktirma (DestroyGrabLine + Struggle) eklenir,
---  * koltuk/line kilma + serbestken konum kaydi + kayda geri birakma duruyor,
---  * toggle kapanirsa gorevler iptal edilir.
-ThirdPartyAGTouchDist = 6
-ThirdPartyAGBreakEvery = 3
-ThirdPartyAGTries = {}
-ThirdPartyGrabReach = 50
-ThirdPartyAGTasks = {}
-ThirdPartyAGParts = { "HumanoidRootPart", "Torso", "UpperTorso", "Head" }
-ThirdPartyAGPush = 150
+-- [KOZMOZ v3] musa_customize: Third Party Protection / Anti Grab.
+-- Kaynak GetRoot/GetAttacker/Rescue mantigi aynen korunur (12 stud / 0.15 sn).
+-- Yalnizca UI ve hedef listesi Kozmoz'a baglandi; Anti-Kick Kunai tasinmadi.
+do
+    local TPP_AntiGrab = false
+    local TPP_Handling = {}
+    local TPP_RescueCooldown = {}
+    local TPP_NearDistance = 12
+    local TPP_Players = game:GetService("Players")
+    local TPP_RS = game:GetService("ReplicatedStorage")
+    local TPP_LP = TPP_Players.LocalPlayer
+    local TPP_GrabEvents = TPP_RS:WaitForChild("GrabEvents", 5)
+    local TPP_SetOwner = TPP_GrabEvents and TPP_GrabEvents:FindFirstChild("SetNetworkOwner")
+    local TPP_DestroyLine = TPP_GrabEvents and TPP_GrabEvents:FindFirstChild("DestroyGrabLine")
+    local TPP_EndEarly = TPP_GrabEvents and TPP_GrabEvents:FindFirstChild("EndGrabEarly")
+    local TPP_ScanTask
 
-function ThirdPartyGrabInfo(victim)
-    -- korunan oyuncunun hangi parcasini kim tutuyor? (PartOwner = oyunun
-    -- kendi yakalama isaresi; 5488 satirindaki Head watcher ile ayni mantik)
-    local char = victim and victim.Character
-    if not char then return nil end
-    for _, partName in ipairs(ThirdPartyAGParts) do
-        local part = char:FindFirstChild(partName)
-        local owner = part and part:FindFirstChild("PartOwner")
-        if owner and owner:IsA("StringValue") and owner.Value ~= "" then
-            local grabber = tostring(owner.Value)
-            if grabber ~= plr.Name and grabber ~= victim.Name then
-                return grabber, part
-            end
-        end
+    local function TPP_GetRoot(plr)
+        local char = plr and plr.Character
+        return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
     end
-    return nil
-end
 
-function ThirdPartyAGContact(victimName, attackerName, heldPart)
-    -- [KOZMOZ] karsi-dokunma (yeniden yazildi): hedef saldirgan DEGIL, secilen
-    -- oyuncunun kendisi. Gerekirse bir kere yanina konulur (tek atim = en hizli),
-    -- sonra secilen oyuncuya line + sahiplenme + kisa itis ile dokunulur.
-    -- Zaten yanindaysa isinlama atlanir (kullanici istegi).
-    local victim = Players:FindFirstChild(victimName)
-    local vChar = victim and victim.Character
-    if not vChar then
-        return false
-    end
-    local vHum = vChar:FindFirstChild("Humanoid")
-    if vHum and vHum.Health <= 0 then
-        return false
-    end
-    local vRoot = vChar:FindFirstChild("HumanoidRootPart") or vChar:FindFirstChild("Torso")
-    local myChar = plr.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not (vRoot and myRoot) then
-        return false
-    end
-    if GetMagnitude(myRoot, vRoot) > ThirdPartyAGTouchDist then
-        pcall(function()
-            myRoot.CFrame = vRoot.CFrame * CFrame.new(0, 0.4, 1.6)
-            stvel(myRoot)
-        end)
-    end
-    local touchPart = heldPart or vRoot
-    pcall(function()
-        CreateLine:FireServer(touchPart)
-        sno(touchPart)
-    end)
-    pcall(function()
-        local dir = vRoot.Position - myRoot.Position
-        if dir.Magnitude > 1.2 then
-            myRoot.AssemblyLinearVelocity = dir.Unit * ThirdPartyAGPush
-        else
-            stvel(myRoot)
-        end
-    end)
-    return true
-end
-
-function ThirdPartyAGBreakGrab(victimName, heldPart)
-    -- [KOZMOZ] tutusu zorla biraktirma: saldirgan benim dokunmama ragmen
-    -- birakmiyorsa cizgiyi kirip karsi koyuyoruz. Dongu bunu her
-    -- ThirdPartyAGBreakEvery denemede bir cagirir (spam yok).
-    local target = Players:FindFirstChild(victimName)
-    local tChar = target and target.Character
-    local tRoot = tChar and (tChar:FindFirstChild("HumanoidRootPart") or tChar:FindFirstChild("Torso"))
-    local part = heldPart or tRoot
-    if not part then
-        return false
-    end
-    pcall(function()
-        DestroyLine:FireServer(part)
-        sno(part)
-        Struggle:FireServer()
-    end)
-    return true
-end
-
-function ThirdPartyAGRelease(targetName)
-    -- Koltuk/line kirma kismi: serbestken konumu kaydet, koltukta
-    -- veya tutulurken line'i kir ve kayitli konuma birak.
-    local target = Players:FindFirstChild(targetName)
-    local tChar = target and target.Character
-    if not tChar then return end
-    local tHRP = tChar:FindFirstChild("HumanoidRootPart")
-    local tHum = tChar:FindFirstChild("Humanoid")
-    if not (tHRP and tHum) then return end
-    if tHum.SeatPart == nil and tHum:GetState() ~= Enum.HumanoidStateType.Dead then
-        ThirdPartyReturnPoses[targetName] = tHRP.CFrame
-        return
-    end
-    if tHum.SeatPart == nil then return end
-    local seat = tHum.SeatPart
-    if not seat.Parent or seat.Parent.Name == "CreatureBlobman" or seat.Parent.Name == "TractorGreen"
-        or seat.Parent.Name:find("Train") then return end
-    pcall(function()
-        Struggle:FireServer()
-        sno(tHRP)
-        task.wait(0.03)
-        DestroyLine:FireServer(tHRP)
-        task.wait(0.03)
-        tHRP.Anchored = true
-        tHRP.AssemblyLinearVelocity = Vector3.zero
-        tHRP.AssemblyAngularVelocity = Vector3.zero
-        task.wait(0.05)
-        tHRP.Anchored = false
-        tHum.Sit = false
-        tHum.PlatformStand = false
-        tHum:ChangeState(Enum.HumanoidStateType.Running)
-        if ThirdPartyReturnPoses[targetName] then
-            tHRP.CFrame = ThirdPartyReturnPoses[targetName]
-            stvel(tHRP)
-            ThirdPartyReturnPoses[targetName] = nil
-        end
-        Struggle:FireServer()
-    end)
-end
-
-function ThirdPartyStopAG()
-    for name, held in pairs(ThirdPartyAGTasks) do
-        ThirdPartyAGTasks[name] = nil
-        ThirdPartyReturnPoses[name] = nil
-        ThirdPartyAGTries[name] = nil
-        pcall(function() task.cancel(held) end)
-    end
-end
-
-ThirdPartyLeft:AddToggle("ThirdPartyAntiGrab", {
-    Text = "Give Anti Grab",
-    Default = false,
-    Callback = function(v)
-        ThirdPartyAntiGrabActive = v
-        if not v then
-            ThirdPartyStopAG()
-            return
-        end
-        if #ThirdPartyTargetList == 0 then
-            ThirdPartyAntiGrabActive = false
-            return
-        end
-        for _, targetName in ipairs(ThirdPartyTargetList) do
-            if not ThirdPartyAGTasks[targetName] then
-                local co
-                co = task.spawn(function()
-                    local notified = false
-                    local function quitAG()
-                        -- yalnizca gorevin kendi kaydiysa sil: task.spawn
-                        -- govdesi ilk beklemeye kadar senkron calisir, o sirada
-                        -- disariya kayit henuz yazilmamis olabilir
-                        if ThirdPartyAGTasks[targetName] == co then
-                            ThirdPartyAGTasks[targetName] = nil
-                            ThirdPartyReturnPoses[targetName] = nil
-                        end
-                    end
-                    while ThirdPartyAntiGrabActive do
-                        local target = Players:FindFirstChild(targetName)
-                        if not (target and target.Parent) then
-                            quitAG()
-                            return
-                        end
-                        local grabber, heldPart = ThirdPartyGrabInfo(target)
-                        if grabber then
-                            if not notified then
-                                notified = true
-                                pcall(function()
-                                    Library:Notify({
-                                        Title = "Third Party Protection",
-                                        Description = targetName .. " tutuldu (" .. grabber .. ") - yanina isinilandi, dokunuldu",
-                                        Time = 2,
-                                    })
-                                end)
-                            end
-                            ThirdPartyAGContact(targetName, grabber, heldPart)
-                            ThirdPartyAGTries[targetName] = (ThirdPartyAGTries[targetName] or 0) + 1
-                            if ThirdPartyAGTries[targetName] % ThirdPartyAGBreakEvery == 0 then
-                                ThirdPartyAGBreakGrab(targetName, heldPart)
-                            end
-                            ThirdPartyAGRelease(targetName)
-                            task.wait(0.02)
-                        else
-                            notified = false
-                            ThirdPartyAGTries[targetName] = 0
-                            -- serbest taramada da ayni mantik calisir: konumu kaydeder
-                            -- (ve varsa) koltuk kilidini kirar
-                            ThirdPartyAGRelease(targetName)
-                            task.wait(0.05)
-                        end
-                    end
-                    quitAG()
-                end)
-                ThirdPartyAGTasks[targetName] = co
-                -- gorev hic beklemeden bittiyse olu kayit birakma
-                local okStatus, st = pcall(coroutine.status, co)
-                if okStatus and st ~= "suspended" then
-                    if ThirdPartyAGTasks[targetName] == co then
-                        ThirdPartyAGTasks[targetName] = nil
-                        ThirdPartyReturnPoses[targetName] = nil
-                    end
+    local function TPP_GetAttacker(char, victim)
+        if not char then return nil end
+        for _, partName in ipairs({"Head", "HumanoidRootPart", "Torso", "UpperTorso"}) do
+            local part = char:FindFirstChild(partName)
+            local owner = part and part:FindFirstChild("PartOwner")
+            if owner and owner:IsA("StringValue") and owner.Value ~= "" then
+                local value = tostring(owner.Value)
+                if value ~= TPP_LP.Name and value ~= victim.Name then
+                    return value
                 end
             end
         end
-    end,
-})
+        return nil
+    end
 
+    local function TPP_Rescue(plr)
+        if not TPP_AntiGrab then return end
+
+        local now = tick()
+        if TPP_Handling[plr.Name] then return end
+        if TPP_RescueCooldown[plr.Name] and now - TPP_RescueCooldown[plr.Name] < 0.15 then return end
+        TPP_Handling[plr.Name] = true
+        TPP_RescueCooldown[plr.Name] = now
+
+        task.spawn(function()
+            local myRoot = TPP_GetRoot(TPP_LP)
+            local targetRoot = TPP_GetRoot(plr)
+            if not myRoot or not targetRoot then
+                TPP_Handling[plr.Name] = nil
+                return
+            end
+
+            local distance = (myRoot.Position - targetRoot.Position).Magnitude
+
+            -- If already inside the protection radius, stay there and do NOT teleport again.
+            -- If far away, teleport to the protected player's side once.
+            if distance > TPP_NearDistance then
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0.5, 2.5)
+                myRoot.AssemblyLinearVelocity = Vector3.zero
+            end
+
+            -- Break the active grab/ownership attempt without repeatedly moving the local player.
+            pcall(function()
+                if TPP_EndEarly then TPP_EndEarly:FireServer(targetRoot) end
+                if TPP_SetOwner then TPP_SetOwner:FireServer(targetRoot, targetRoot.CFrame) end
+                if TPP_DestroyLine then
+                    TPP_DestroyLine:FireServer(targetRoot)
+                    local head = plr.Character and plr.Character:FindFirstChild("Head")
+                    if head then TPP_DestroyLine:FireServer(head) end
+                end
+            end)
+
+            task.wait(0.15)
+            TPP_Handling[plr.Name] = nil
+        end)
+    end
+
+    -- Toggle kapaninca / arayuz kaldirilinca tarama gorevini durdur.
+    function ThirdPartyStopAG()
+        TPP_AntiGrab = false
+        ThirdPartyAntiGrabActive = false
+        if TPP_ScanTask then
+            local thread = TPP_ScanTask
+            TPP_ScanTask = nil
+            pcall(function() task.cancel(thread) end)
+        end
+    end
+
+    ThirdPartyLeft:AddToggle("ThirdPartyAntiGrab", {
+        Text = "Anti Grab",
+        Default = false,
+        Callback = function(enabled)
+            if not enabled then
+                ThirdPartyStopAG()
+                return
+            end
+            TPP_AntiGrab = true
+            ThirdPartyAntiGrabActive = true
+            if TPP_ScanTask then return end
+            TPP_ScanTask = task.spawn(function()
+                while TPP_AntiGrab do
+                    task.wait(0.03)
+                    if TPP_AntiGrab then
+                        -- Mevcut Protect Player(s) secimini canli oku.
+                        for _, username in ipairs(ThirdPartyTargetList) do
+                            local target = TPP_Players:FindFirstChild(username)
+                            if target and target ~= TPP_LP and target.Character then
+                                if TPP_GetAttacker(target.Character, target) then
+                                    TPP_Rescue(target)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end,
+    })
+    Library:OnUnload(ThirdPartyStopAG)
+end
 
 ThirdPartyLeft:AddToggle("ThirdPartyAntiKickItem", {
     Text = "Give Anti Kick [ITEM]",
@@ -9002,8 +8833,144 @@ Services.UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-AttackTargetGroupbox = Tabs.AttackTab:AddLeftGroupbox("Target & Actions", "target")
-AttackMethodsGroupbox = Tabs.AttackTab:AddRightGroupbox("Loop Methods", "sword")
+-- [KOZMOZ v5] Existing Target controls remain in their own subtab.
+AttackTargetHeader = Tabs.AttackTab:AddLeftGroupbox("Target", "target")
+AttackTargetTabs = AttackTargetHeader:AddTabbox({Name = "KozmozTargetPreview", PopOut = false})
+AttackTargetGroupbox = AttackTargetTabs:AddTab("Target", "target")
+AttackPreviewTab = AttackTargetTabs:AddTab("Preview", "eye")
+-- [KOZMOZ v4] Methods navigation. Selecting a tab never enables an action.
+KozMethodsUI = {
+    Current = "Kick", Category = "Blobman", Hovered = nil,
+    Buttons = {}, CustomKickHeight = 19, KickMode = "Fast Kick",
+}
+KozMethodsMenu = Tabs.AttackTab:AddRightGroupbox("Methods", "swords", true, false, true)
+KozKickCommon = Tabs.AttackTab:AddRightGroupbox("Kick", "sword", true, false, true)
+KozBlobmanKickGroup = Tabs.AttackTab:AddRightGroupbox("Blobman", "bot", true, false, true)
+KozOwnershipKickGroup = Tabs.AttackTab:AddRightGroupbox("Ownership", "hand", false, false, true)
+KozLoopPlaceholder = Tabs.AttackTab:AddRightGroupbox("Loop", "repeat", false, false, true)
+KozLockPlaceholder = Tabs.AttackTab:AddRightGroupbox("Lock", "lock", false, false, true)
+KozLoopPlaceholder:AddLabel("Daha sonra düzenlenecek.", true)
+KozLockPlaceholder:AddLabel("Daha sonra düzenlenecek.", true)
+AttackMethodsGroupbox = Tabs.AttackTab:AddRightGroupbox("Eski Yöntemler", "archive", true, true)
+
+function KozMethodsUI.Paint()
+    local function bind(object, properties)
+        Library:AddToRegistry(object, properties)
+        for property, value in pairs(properties) do
+            object[property] = type(value) == "function" and value() or Library.Scheme[value]
+        end
+    end
+    for name, elements in pairs(KozMethodsUI.Buttons) do
+        local active = KozMethodsUI.Current == name
+        local color = active and "BackgroundColor" or "FontColor"
+        bind(elements.Button, {BackgroundColor3 = function()
+            if KozMethodsUI.Current == name then return Library.Scheme.AccentColor end
+            local base = Library.Scheme.MainColor
+            return KozMethodsUI.Hovered == name and base:Lerp(Library.Scheme.FontColor, 0.08) or base
+        end})
+        bind(elements.Label, {TextColor3 = color, FontFace = "Font"})
+        elements.Label.TextTransparency = active and 0 or 0.4
+        if elements.Icon then
+            bind(elements.Icon, {ImageColor3 = color})
+            elements.Icon.ImageTransparency = active and 0 or 0.4
+        end
+    end
+end
+
+function KozMethodsUI.Refresh()
+    local kick = KozMethodsUI.Current == "Kick"
+    KozKickCommon:SetVisible(kick)
+    KozBlobmanKickGroup:SetVisible(kick and KozMethodsUI.Category == "Blobman")
+    KozOwnershipKickGroup:SetVisible(kick and KozMethodsUI.Category == "Ownership")
+    KozLoopPlaceholder:SetVisible(KozMethodsUI.Current == "Loop")
+    KozLockPlaceholder:SetVisible(KozMethodsUI.Current == "Lock")
+    KozMethodsUI.Paint()
+end
+
+function KozMethodsUI.Select(name)
+    if name ~= "Kick" and name ~= "Loop" and name ~= "Lock" then return end
+    KozMethodsUI.Current = name
+    KozMethodsUI.Refresh()
+end
+
+function KozMethodsUI.Reset()
+    KozMethodsUI.Current = "Kick"
+    KozMethodsUI.Category = "Blobman"
+    KozMethodsUI.Hovered = nil
+    local picker = Library.Options.KozKickCategory
+    if picker then picker:SetValue("Blobman") end
+    KozMethodsUI.Refresh()
+end
+
+do
+    local row = Instance.new("Frame")
+    row.Name = "KozmozMethodsTabs"
+    row.BackgroundTransparency = 1
+    row.Size = UDim2.new(1, 0, 0, 28)
+    row.Parent = KozMethodsMenu.Container
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 4)
+    layout.Parent = row
+    for index, name in ipairs({"Kick", "Loop", "Lock"}) do
+        local button = Instance.new("TextButton")
+        button.Name = "KozMethod" .. name
+        button.Text = ""
+        button.AutoButtonColor = false
+        button.Size = UDim2.new(1 / 3, -3, 1, 0)
+        button.LayoutOrder = index
+        button.Parent = row
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 4)
+        corner.Parent = button
+        local content = Instance.new("Frame")
+        content.BackgroundTransparency = 1
+        content.AnchorPoint = Vector2.new(0.5, 0.5)
+        content.Position = UDim2.fromScale(0.5, 0.5)
+        content.Size = UDim2.fromOffset(0, 18)
+        content.AutomaticSize = Enum.AutomaticSize.X
+        content.Parent = button
+        local list = Instance.new("UIListLayout")
+        list.FillDirection = Enum.FillDirection.Horizontal
+        list.VerticalAlignment = Enum.VerticalAlignment.Center
+        list.SortOrder = Enum.SortOrder.LayoutOrder
+        list.Padding = UDim.new(0, 6)
+        list.Parent = content
+        local iconNames = {Kick = "sword", Loop = "repeat", Lock = "lock"}
+        local iconData = Library:GetCustomIcon(iconNames[name])
+        local icon
+        if iconData then
+            icon = Instance.new("ImageLabel")
+            icon.BackgroundTransparency = 1
+            icon.Size = UDim2.fromOffset(14, 14)
+            icon.LayoutOrder = 1
+            icon.Parent = content
+            Library:ApplyLucideIcon(icon, iconData)
+        end
+        local label = Instance.new("TextLabel")
+        label.BackgroundTransparency = 1
+        label.AutomaticSize = Enum.AutomaticSize.X
+        label.Size = UDim2.fromOffset(0, 18)
+        label.TextSize = 14
+        label.FontFace = Library.Scheme.Font
+        label.Text = name
+        label.LayoutOrder = 2
+        label.Parent = content
+        KozMethodsUI.Buttons[name] = {Button = button, Label = label, Icon = icon}
+        button.MouseEnter:Connect(function()
+            KozMethodsUI.Hovered = name
+            KozMethodsUI.Paint()
+        end)
+        button.MouseLeave:Connect(function()
+            if KozMethodsUI.Hovered == name then KozMethodsUI.Hovered = nil end
+            KozMethodsUI.Paint()
+        end)
+        button.MouseButton1Click:Connect(function() KozMethodsUI.Select(name) end)
+    end
+    KozMethodsMenu:Resize()
+    KozMethodsUI.Refresh()
+end
 AttackExtrasGroupbox = Tabs.AttackTab:AddLeftGroupbox("Extras", "cog")
 
 local function updateAttackPlayerList()
@@ -9027,6 +8994,12 @@ local function getTargetName()
         return getUsernameFromFormatted(targetDropdown.Value)
     end
     return nil
+end
+
+-- Shared with the transferred Genesis controls: always use Kozmoz's target picker.
+function KozMethodsUI.GetTarget()
+    local name = getTargetName()
+    return name and Services.Players:FindFirstChild(name) or nil
 end
 
 AttackFuncs = {
@@ -10394,7 +10367,7 @@ AttackMethodsGroupbox:AddToggle("KickLoopToggle", {
     Callback = function(v) AttackFuncs.kickActive = v; if v then AttackFuncs.kickTask = task.spawn(KickLoop) elseif AttackFuncs.kickTask then task.cancel(AttackFuncs.kickTask) end end
 })
 
-AttackMethodsGroupbox:AddToggle("LoopKickToggle", {
+KozBlobmanKickGroup:AddToggle("LoopKickToggle", {
     Text = "Loop Kick (ORBIT)", Default = false,
     Callback = function(v) 
         AttackFuncs.loopKickActive = v
@@ -10407,12 +10380,12 @@ AttackMethodsGroupbox:AddToggle("LoopKickToggle", {
     end
 })
 
-AttackMethodsGroupbox:AddToggle("LoopKickBlobToggle", {
+KozBlobmanKickGroup:AddToggle("LoopKickBlobToggle", {
     Text = "Blobman Kick (Classic)", Default = false,
     Callback = function(v) AttackFuncs.loopKickBlobActive = v; if v then AttackFuncs.loopKickBlobTask = task.spawn(LoopKickBlobLoop) elseif AttackFuncs.loopKickBlobTask then task.cancel(AttackFuncs.loopKickBlobTask) end end
 })
 
-AttackMethodsGroupbox:AddToggle("KOZMOZGrabBlob", {
+KozBlobmanKickGroup:AddToggle("KOZMOZGrabBlob", {
     Text = "Blobman kick (Bypass) [DoubleHand]",
     Default = false,
     Callback = function(on)
@@ -10550,12 +10523,12 @@ AttackMethodsGroupbox:AddToggle("KOZMOZGrabBlob", {
                             end)
                         end
                         if grabStartTime == 0 then grabStartTime = tick() end
-                        if tick() - grabStartTime > 0.3 then
+                        if tick() - grabStartTime > (KozMethodsUI.KickMode == "Fast Kick" and 0.15 or 0.4) then
                             dragging = true
                             grabStartTime = 0
                         end
                     else
-                        local lockPos = savedPos * CFrame.new(0, 23, 0)
+                        local lockPos = savedPos * CFrame.new(0, KozMethodsUI.CustomKickHeight, 0)
                         pcall(function()
                             myRoot.CFrame = savedPos
                             tRoot.CFrame = lockPos
@@ -10568,7 +10541,11 @@ AttackMethodsGroupbox:AddToggle("KOZMOZGrabBlob", {
                             end)
                         end
                     end
-                    RunService.Heartbeat:Wait()
+                    if KozMethodsUI.KickMode == "Slow Kick" then
+                        task.wait(0.05)
+                    else
+                        RunService.Heartbeat:Wait()
+                    end
                 end
                 pcall(function()
                     if myRoot and myRoot.Parent then
@@ -10636,8 +10613,8 @@ do
     KozFlags.ignoreHeights = KozFlags.ignoreHeights or {}
 
     -- endrst: "Kick Method" secim kutusu (kick cesitleri)
-    AttackMethodsGroupbox:AddDropdown("KozKickMethod", {
-        Text = "Kick Method",
+    KozBlobmanKickGroup:AddDropdown("KozKickMethod", {
+        Text = "Blobman Method",
         Values = {"Kick Double Hands", "Kick Grab + Blob", "Kick One Grab", "Kick Fly Up",
             "Kick Drift Fly"},
         Default = "Kick Double Hands",
@@ -11697,7 +11674,7 @@ do
         end
     end)
 
-    AttackMethodsGroupbox:AddToggle("KozBlobKick", {
+    KozBlobmanKickGroup:AddToggle("KozBlobKick", {
         Text = "Kick",
         Default = false,
         Callback = function(v)
@@ -12446,7 +12423,7 @@ PalletForRagdoll = nil
 ragdollSpawnTask = nil
 ragdollLoopTask = nil
 
-AttackMethodsGroupbox:AddToggle("EnableRagdoll", {
+KozKickCommon:AddToggle("EnableRagdoll", {
     Text = "Enable Ragdoll Target",
     Default = false,
     Callback = function(v)
@@ -12530,6 +12507,1353 @@ AttackMethodsGroupbox:AddToggle("EnableRagdoll", {
         end
     end,
 })
+
+-- [KOZMOZ v4] Kick category: default Blobman; selecting is not an action.
+KozKickCommon:AddDropdown("KozKickCategory", {
+    Text = "Kick Method",
+    Values = {"Blobman", "Ownership"},
+    Default = "Blobman",
+    Callback = function(value)
+        KozMethodsUI.Category = value == "Ownership" and "Ownership" or "Blobman"
+        KozMethodsUI.Refresh()
+    end,
+})
+
+-- Genesis Kick Method selector renamed to Kick Mode, above its height input.
+KozBlobmanKickGroup:AddDropdown("KozGenesisKickMode", {
+    Text = "Kick Mode",
+    Values = {"Slow Kick", "Fast Kick"},
+    Default = "Fast Kick",
+    Tooltip = "Blobman kick (Bypass) [DoubleHand] hiz/cekme modu.",
+    Callback = function(value)
+        KozMethodsUI.KickMode = value
+    end,
+})
+KozBlobmanKickGroup:AddInput("KozGenesisKickHeight", {
+    Text = "Custom Kick Height, for kick fast",
+    Default = "19",
+    Placeholder = "Enter height (not more than 40, recommended 19)",
+    Numeric = true,
+    Finished = true,
+    Tooltip = "Blobman kick (Bypass) [DoubleHand] yuksekligi.",
+    Callback = function(value)
+        local height = tonumber(value)
+        KozMethodsUI.CustomKickHeight = height or 19
+    end,
+})
+
+-- [KOZMOZ v4] Genesis Ownership controls. Source engines below use isolated IDs
+-- and the current Kozmoz target. Other Genesis sections are not imported.
+do
+    local PS = Services.Players
+    local Player = Services.LocalPlayer
+    local RS = Services.rs
+    local ReplicatedStorage = RS
+    local R = Services.RunService
+    local Toggles = Library.Toggles
+    local GenesisState = {}
+    local kickLoopEnabled = false
+    local function notify(title, message, time)
+        Library:Notify({Title = title, Description = message, Time = time or 3})
+    end
+    -- The uploaded Grab Troll code referenced an undefined IsRagdolled helper.
+    local function IsRagdolled(humanoid)
+        if not humanoid then return false end
+        local flag = humanoid:FindFirstChild("Ragdolled")
+        if flag and flag:IsA("BoolValue") then return flag.Value end
+        local state = humanoid:GetState()
+        return state == Enum.HumanoidStateType.Ragdoll
+            or state == Enum.HumanoidStateType.Physics
+            or state == Enum.HumanoidStateType.FallingDown
+    end
+-- Genesis source: basic
+do
+    local ownershipKickActive = false
+    local ownershipKickTask = nil
+    local finishBasic
+
+    local function OwnershipKickFunction(targetName)
+        local target = PS:FindFirstChild(targetName)
+        if not target then return end
+
+        local GE = RS:WaitForChild("GrabEvents")
+        local myChar = Player.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if not myRoot then return end
+
+        local savedPos = myRoot.CFrame
+        local dragging = false
+        local grabStartTime = 0
+        local checkStartTime = 0
+
+        -- Minimal FPS monitoring (cleaned up logic)
+        local currentFPS = 60
+        local fpsConn = R.RenderStepped:Connect(function(dt)
+            currentFPS = 1 / dt
+        end)
+
+        local bodyPos = nil
+        local bodyGyro = nil
+
+        local function cleanupBodies()
+            pcall(function()
+                if bodyPos then bodyPos:Destroy() bodyPos = nil end
+                if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+            end)
+        end
+
+        finishBasic = function()
+            fpsConn:Disconnect()
+            cleanupBodies()
+            if myRoot and myRoot.Parent then myRoot.CFrame = savedPos end
+        end
+
+        local function createBodies(targetRoot, pos)
+            cleanupBodies()
+            for _, v in pairs(targetRoot:GetChildren()) do
+                if v:IsA("BodyPosition") or v:IsA("BodyGyro") then
+                    v:Destroy()
+                end
+            end
+            bodyPos = Instance.new("BodyPosition")
+            bodyPos.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyPos.D = 100
+            bodyPos.Position = pos
+            bodyPos.Parent = targetRoot
+            
+            bodyGyro = Instance.new("BodyGyro")
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.D = 100
+            bodyGyro.CFrame = CFrame.new(pos)
+            bodyGyro.Parent = targetRoot
+        end
+
+        while ownershipKickActive do
+            local currentTarget = PS:FindFirstChild(target.Name)
+            if not currentTarget or not currentTarget.Parent then
+                cleanupBodies()
+                break
+            end
+
+            myChar = Player.Character
+            myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            local tChar = currentTarget.Character
+            local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            local tHum = tChar and tChar:FindFirstChild("Humanoid")
+
+            if tRoot and tHum and tHum.Health > 0 and myRoot then
+                if not dragging then
+                    myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+                    cleanupBodies()
+                    checkStartTime = 0
+
+                    -- Single Fire per Frame for initial grab
+                    pcall(function()
+                        tHum.PlatformStand = true
+                        tHum.Sit = true
+                        GE.SetNetworkOwner:FireServer(tRoot, tRoot.CFrame)
+                        GE.DestroyGrabLine:FireServer(tRoot)
+                    end)
+
+                    myRoot.AssemblyLinearVelocity = Vector3.zero
+                    myRoot.AssemblyAngularVelocity = Vector3.zero
+
+                    if grabStartTime == 0 then grabStartTime = tick() end
+                    if tick() - grabStartTime > 0.35 then
+                        dragging = true
+                        grabStartTime = 0
+                        checkStartTime = tick()
+                        local lockPos = savedPos * CFrame.new(6, 9, 0)
+                        createBodies(tRoot, lockPos.Position)
+                    end
+                else
+                    myRoot.CFrame = savedPos
+                    local lockPos = savedPos * CFrame.new(6, 9, 0)
+
+                    myRoot.AssemblyLinearVelocity = Vector3.zero
+                    myRoot.AssemblyAngularVelocity = Vector3.zero
+
+                    if bodyPos and bodyPos.Parent then
+                        bodyPos.Position = lockPos.Position
+                        if bodyGyro then bodyGyro.CFrame = lockPos end
+                    else
+                        createBodies(tRoot, lockPos.Position)
+                    end
+
+                    tHum.PlatformStand = true
+
+                    -- OPTIMIZED: Exactly one fire per frame
+                    pcall(function()
+                        GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                        GE.DestroyGrabLine:FireServer(tRoot)
+                    end)
+
+                    if checkStartTime > 0 and tick() - checkStartTime > 0.30 then
+                        local currentDist = (tRoot.Position - lockPos.Position).Magnitude
+                        if currentDist > 10 then
+                            dragging = false
+                            grabStartTime = 0
+                            checkStartTime = 0
+                            cleanupBodies()
+                            myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+                        else
+                            checkStartTime = tick()
+                        end
+                    end
+                end
+            else
+                dragging = false
+                grabStartTime = 0
+                checkStartTime = 0
+                cleanupBodies()
+            end
+            
+            -- This controls the "once per frame" timing
+            R.Heartbeat:Wait()
+        end
+
+        fpsConn:Disconnect()
+        cleanupBodies()
+        if myRoot then myRoot.CFrame = savedPos end
+    end
+ 
+ 	KozOwnershipKickGroup:AddToggle("KozGenesisOwnershipBasic", {
+        Text = "kick (Ownership)",
+        Default = false,
+        Callback = function(Value)
+            ownershipKickActive = Value
+            if Value then
+                if not KozMethodsUI.GetTarget() then
+                    notify("Error", "Select target first", 3)
+                    Toggles.KozGenesisOwnershipBasic:SetValue(false)
+                    return
+                end
+                ownershipKickTask = task.spawn(function()
+                    OwnershipKickFunction(KozMethodsUI.GetTarget().Name)
+                end)
+            else
+                ownershipKickActive = false
+                if ownershipKickTask then
+                    task.cancel(ownershipKickTask)
+                    ownershipKickTask = nil
+                end
+                
+                if finishBasic then pcall(finishBasic) finishBasic = nil end
+                if KozMethodsUI.GetTarget() and KozMethodsUI.GetTarget().Character then
+                    local tRoot = KozMethodsUI.GetTarget().Character:FindFirstChild("HumanoidRootPart")
+                    if tRoot then
+                        for _, v in pairs(tRoot:GetChildren()) do
+                            if v:IsA("BodyPosition") or v:IsA("BodyGyro") then
+                                pcall(function() v:Destroy() end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    })
+end
+
+
+-- Genesis source: ragdoll
+do
+    KozOwnershipKickGroup:AddToggle("KozGenesisRagdollTarget", {
+        Text = "Ragdoll Target",
+        Default = false,
+        Callback = function(Value)
+            local RS = game:GetService("ReplicatedStorage")
+            local DestroyToy = RS:WaitForChild("MenuToys"):WaitForChild("DestroyToy")
+            local SetNetOwner = RS:WaitForChild("GrabEvents"):WaitForChild("SetNetworkOwner")
+            local DestroyLine = RS:WaitForChild("GrabEvents"):WaitForChild("DestroyGrabLine")
+            local toysFolder = workspace:WaitForChild(Player.Name.."SpawnedInToys")
+            local lpName = Player.Name
+
+            if Value then
+                if not KozMethodsUI.GetTarget() then
+                    notify("Error", "Select target first", 3)
+                    Toggles.KozGenesisRagdollTarget:SetValue(false)
+                    return
+                end
+
+                GenesisState.palletRagdollActive = true
+                GenesisState.PalletForRagdoll = nil
+                GenesisState.palletCacheConn = nil
+
+                local function startPalletCache()
+                    if GenesisState.palletCacheConn then
+                        GenesisState.palletCacheConn:Disconnect()
+                    end
+                    GenesisState.palletCacheConn = toysFolder.ChildAdded:Connect(function(child)
+                        if not GenesisState.palletRagdollActive then return end
+                        if child.Name ~= "PalletLightBrown" and child.Name ~= "PalletForRagdoll" then return end
+
+                        local soundPart = child:WaitForChild("SoundPart", 3)
+                        if not soundPart then return end
+
+                        -- Prend ownership cote serveur
+                        pcall(function()
+                            SetNetOwner:FireServer(soundPart, soundPart.CFrame)
+                            DestroyLine:FireServer(soundPart)
+                        end)
+
+                        local partOwner = soundPart:WaitForChild("PartOwner", 1)
+                        if partOwner and partOwner.Value == lpName then
+
+                            -- Invisible cote serveur via ownership
+                            for _, v in pairs(child:GetChildren()) do
+                                if v:IsA("BasePart") then
+                                    v.CanCollide = false
+                                    v.CanQuery = false
+                                    v.Transparency = 1
+                                    v.Size = Vector3.new(0.001, 0.001, 0.001)
+                                end
+                            end
+
+                            child.Name = "PalletForRagdoll"
+                            GenesisState.PalletForRagdoll = child
+
+                            task.spawn(function()
+                                while GenesisState.palletRagdollActive and child.Parent do
+                                    local tChar = KozMethodsUI.GetTarget() and KozMethodsUI.GetTarget().Character
+                                    local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                                    local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
+
+                                    if tRoot and soundPart.Parent then
+                                        if tHum and not tHum.Ragdolled.Value then
+                                            soundPart.CFrame = tRoot.CFrame
+                                            soundPart.AssemblyLinearVelocity = Vector3.new(0, 9e9, 0)
+                                            task.wait(0.05)
+                                            soundPart.CFrame = CFrame.new(0, 9e9, 0)
+                                        end
+                                    end
+                                    task.wait(0.08)
+                                end
+                            end)
+
+                            child.AncestryChanged:Connect(function()
+                                if not child.Parent then
+                                    GenesisState.PalletForRagdoll = nil
+                                    if GenesisState.palletRagdollActive then
+                                        task.wait(0.1)
+                                        if GenesisState.spawnNewPallet then GenesisState.spawnNewPallet() end
+                                    end
+                                end
+                            end)
+                        else
+                            pcall(function() DestroyToy:FireServer(child) end)
+                        end
+                    end)
+                end
+
+                GenesisState.spawnNewPallet = function()
+                    if not GenesisState.palletRagdollActive then return end
+                    if GenesisState.PalletForRagdoll and GenesisState.PalletForRagdoll.Parent then return end
+                    local c = Player.Character
+                    local h = c and c:FindFirstChild("HumanoidRootPart")
+                    if not h then return end
+                    task.spawn(function()
+                        pcall(function()
+                            RS.MenuToys.SpawnToyRemoteFunction:InvokeServer(
+                                "PalletLightBrown",
+                                h.CFrame * CFrame.new(0, 10, 20),
+                                Vector3.new(0, 0, 0)
+                            )
+                        end)
+                    end)
+                end
+
+                startPalletCache()
+                GenesisState.spawnNewPallet()
+            else
+                GenesisState.palletRagdollActive = false
+
+                if GenesisState.palletCacheConn then
+                    GenesisState.palletCacheConn:Disconnect()
+                    GenesisState.palletCacheConn = nil
+                end
+
+                local pallet = GenesisState.PalletForRagdoll
+                if pallet and pallet.Parent then
+                    pcall(function() DestroyToy:FireServer(pallet) end)
+                end
+
+                GenesisState.PalletForRagdoll = nil
+
+                if toysFolder:FindFirstChild("PalletForRagdoll") then
+                    pcall(function() DestroyToy:FireServer(toysFolder.PalletForRagdoll) end)
+                end
+            end
+        end
+    })
+end
+
+
+
+-- Genesis source: modes
+do
+    local modeOptions = {
+        "Ownership Kick(80+ fps)",
+        "Ownership Kick fast",
+        "Ownership Kick For Exploiter",
+        "UPGRADED Ownership Kick"
+    }
+
+    local selectedKickMode = "Ownership Kick(80+ fps)"
+    local ownershipKickActive = false
+    local ownershipKickTask = nil
+    local ownershipKickConnections = {}
+    local modeCleanup
+
+    local function cleanupConnections()
+        for _, conn in ipairs(ownershipKickConnections) do
+            pcall(function()
+                if type(conn) == "thread" then task.cancel(conn) else conn:Disconnect() end
+            end)
+        end
+        ownershipKickConnections = {}
+        if ownershipKickTask then
+            task.cancel(ownershipKickTask)
+            ownershipKickTask = nil
+        end
+        ownershipKickActive = false
+        if modeCleanup then pcall(modeCleanup) modeCleanup = nil end
+        
+        pcall(function()
+            local LocalPlayer = game:GetService("Players").LocalPlayer
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local root = LocalPlayer.Character.HumanoidRootPart
+                root.Anchored = false
+                root.AssemblyLinearVelocity = Vector3.zero
+                root.AssemblyAngularVelocity = Vector3.zero
+            end
+        end)
+    end
+
+    KozOwnershipKickGroup:AddDropdown("KozGenesisOwnershipMode", {
+        Text = "Select Ownership Mode",
+        Values = modeOptions,
+        Default = "Ownership Kick(80+ fps)",
+        Callback = function(Value)
+            selectedKickMode = Value
+        end
+    })
+
+    KozOwnershipKickGroup:AddToggle("KozGenesisOwnershipModeToggle", {
+        Text = "kick (Ownership)",
+        Default = false,
+        Callback = function(Value)
+            if not Value then
+                cleanupConnections()
+                return
+            end
+
+            if ownershipKickActive then
+                cleanupConnections()
+            end
+
+            ownershipKickActive = Value
+
+            local targetName = (KozMethodsUI.GetTarget() and KozMethodsUI.GetTarget().Name)
+            if not targetName or targetName == "" then
+                pcall(function()
+                    if Library and Library.Notify then
+                        Library:Notify("Error: Select target first!", 3)
+                    end
+                end)
+                ownershipKickActive = false
+                return
+            end
+
+            local mode = selectedKickMode
+
+            ownershipKickTask = task.spawn(function()
+                local Players = game:GetService("Players")
+                local RunService = game:GetService("RunService")
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                local Workspace = game:GetService("Workspace")
+                local LocalPlayer = Players.LocalPlayer
+
+                local target = Players:FindFirstChild(targetName)
+                if not target then
+                    ownershipKickActive = false
+                    return
+                end
+
+                local GE = ReplicatedStorage:WaitForChild("GrabEvents")
+                local SetNetOwner = GE:WaitForChild("SetNetworkOwner")
+                local DestroyGrabLine = GE:WaitForChild("DestroyGrabLine")
+                
+                local ZERO_VECTOR = Vector3.new(0, 0, 0)
+                local HIDDEN_CF = CFrame.new(0, 1e9, 0)
+
+                if mode == "Ownership Kick(80+ fps)" then
+                    local myChar = LocalPlayer.Character
+                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    if not myRoot then
+                        ownershipKickActive = false
+                        return
+                    end
+
+                    local savedPos = myRoot.CFrame 
+                    local dragging = false
+                    local grabStartTime = 0
+                    local checkStartTime = 0
+                    
+                    local currentFPS = 60
+                    local fpsConnection = RunService.RenderStepped:Connect(function(dt)
+                        currentFPS = 1 / dt
+                    end)
+                    table.insert(ownershipKickConnections, fpsConnection)
+
+                    local bodyPos = nil
+                    local bodyGyro = nil
+
+                    local function cleanupBodies()
+                        pcall(function()
+                            if bodyPos then bodyPos:Destroy() bodyPos = nil end
+                            if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+                        end)
+                    end
+
+                    local function createBodies(targetRoot, pos)
+                        cleanupBodies()
+                        
+                        for _, v in pairs(targetRoot:GetChildren()) do
+                            if v:IsA("BodyPosition") or v:IsA("BodyGyro") then
+                                v:Destroy()
+                            end
+                        end
+                        
+                        bodyPos = Instance.new("BodyPosition")
+                        bodyPos.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                        bodyPos.D = 100
+                        bodyPos.Position = pos
+                        bodyPos.Parent = targetRoot
+                        
+                        bodyGyro = Instance.new("BodyGyro")
+                        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+                        bodyGyro.D = 100
+                        bodyGyro.CFrame = CFrame.new(pos)
+                        bodyGyro.Parent = targetRoot
+                    end
+
+                    modeCleanup = function()
+                        cleanupBodies()
+                        if myRoot and myRoot.Parent then myRoot.CFrame = savedPos end
+                    end
+                    while ownershipKickActive do
+                        local currentTargetName = (KozMethodsUI.GetTarget() and KozMethodsUI.GetTarget().Name)
+                        local currentTarget = currentTargetName and Players:FindFirstChild(currentTargetName)
+                        
+                        if not currentTarget or not currentTarget.Character or not currentTarget.Parent then 
+                            cleanupBodies()
+                            break 
+                        end
+                        
+                        myChar = LocalPlayer.Character
+                        myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                        local tChar = currentTarget.Character
+                        local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                        local tHum = tChar and tChar:FindFirstChild("Humanoid")
+                        
+                        if tRoot and tHum and tHum.Health > 0 and myRoot then
+                            if not dragging then
+                                myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+                                cleanupBodies()
+                                checkStartTime = 0
+                                
+                                pcall(function()
+                                    tHum.PlatformStand = true
+                                    tHum.Sit = true
+                                    if GE:FindFirstChild("SetNetworkOwner") then GE.SetNetworkOwner:FireServer(tRoot, tRoot.CFrame) end
+                                    if GE:FindFirstChild("SetNetworkOwner") then GE.SetNetworkOwner:FireServer(tRoot, tRoot.CFrame) end
+                                    if GE:FindFirstChild("DestroyGrabLine") then GE.DestroyGrabLine:FireServer(tRoot) end
+                                end)
+                                
+                                myRoot.AssemblyLinearVelocity = Vector3.zero
+                                myRoot.AssemblyAngularVelocity = Vector3.zero
+                                
+                                if grabStartTime == 0 then grabStartTime = tick() end
+                                if tick() - grabStartTime > 0.15 then
+                                    dragging = true
+                                    grabStartTime = 0
+                                    checkStartTime = tick()
+                                    local lockPos = savedPos * CFrame.new(5, 20, 4)
+                                    createBodies(tRoot, lockPos.Position)
+                                end
+                            else
+                                myRoot.CFrame = savedPos
+                                local lockPos = savedPos * CFrame.new(5, 20, 4)
+                                
+                                myRoot.AssemblyLinearVelocity = Vector3.zero
+                                myRoot.AssemblyAngularVelocity = Vector3.zero
+                                
+                                if bodyPos and bodyPos.Parent then
+                                    bodyPos.Position = lockPos.Position
+                                    if bodyGyro then
+                                        bodyGyro.CFrame = lockPos
+                                    end
+                                else
+                                    createBodies(tRoot, lockPos.Position)
+                                end
+                                
+                                tHum.PlatformStand = true
+                                
+                                pcall(function()
+                                    if GE:FindFirstChild("SetNetworkOwner") and GE:FindFirstChild("DestroyGrabLine") then
+                                        if currentFPS > 200 then
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.DestroyGrabLine:FireServer(tRoot)
+                                        elseif currentFPS >= 155 and currentFPS <= 200 then
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.DestroyGrabLine:FireServer(tRoot)
+                                        else 
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+                                            GE.DestroyGrabLine:FireServer(tRoot)
+                                        end
+                                    end
+                                end)
+                                
+                                if checkStartTime > 0 and tick() - checkStartTime > 0.15 then
+                                    local currentDist = (tRoot.Position - lockPos.Position).Magnitude
+                                    
+                                    if currentDist > 10 then
+                                        dragging = false
+                                        grabStartTime = 0
+                                        checkStartTime = 0
+                                        cleanupBodies()
+                                        myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+                                    else
+                                        checkStartTime = tick()
+                                    end
+                                end
+                            end
+                        else
+                            dragging = false
+                            grabStartTime = 0
+                            checkStartTime = 0
+                            cleanupBodies()
+                        end
+                        RunService.Heartbeat:Wait()
+                    end
+                    
+                    cleanupBodies()
+                    if myRoot then myRoot.CFrame = savedPos end
+                    
+                elseif mode == "UPGRADED Ownership Kick" then
+                    local myChar = LocalPlayer.Character
+                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    if not myRoot then
+                        ownershipKickActive = false
+                        return
+                    end
+                    
+                    local savedPos = myRoot.CFrame 
+                    local dragging = false
+                    local grabStartTime = 0
+                    local checkStartTime = 0
+                    
+                    local bodyPos = nil
+                    local bodyGyro = nil
+
+                    local function cleanupBodies()
+                        pcall(function()
+                            if bodyPos then bodyPos:Destroy() bodyPos = nil end
+                            if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+                        end)
+                    end
+
+                    local function createBodies(targetRoot, pos)
+                        cleanupBodies()
+                        
+                        for _, v in pairs(targetRoot:GetChildren()) do
+                            if v:IsA("BodyPosition") or v:IsA("BodyGyro") then
+                                v:Destroy()
+                            end
+                        end
+                        
+                        bodyPos = Instance.new("BodyPosition")
+                        bodyPos.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                        bodyPos.D = 500
+                        bodyPos.P = 100000
+                        bodyPos.Position = pos
+                        bodyPos.Parent = targetRoot
+                        
+                        bodyGyro = Instance.new("BodyGyro")
+                        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+                        bodyGyro.D = 500
+                        bodyGyro.P = 100000
+                        bodyGyro.CFrame = CFrame.new(pos)
+                        bodyGyro.Parent = targetRoot
+                    end
+
+                    modeCleanup = function()
+                        cleanupBodies()
+                        if myRoot and myRoot.Parent then myRoot.CFrame = savedPos end
+                    end
+                    while ownershipKickActive do
+                        local currentTargetName = (KozMethodsUI.GetTarget() and KozMethodsUI.GetTarget().Name)
+                        local currentTarget = currentTargetName and Players:FindFirstChild(currentTargetName)
+                        
+                        if not currentTarget or not currentTarget.Character or not currentTarget.Parent then 
+                            cleanupBodies()
+                            break 
+                        end
+                        
+                        myChar = LocalPlayer.Character
+                        myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                        local tChar = currentTarget.Character
+                        local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                        local tHum = tChar and tChar:FindFirstChild("Humanoid")
+                        
+                        if tRoot and tHum and tHum.Health > 0 and myRoot then
+                            if not dragging then
+                                myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+                                cleanupBodies()
+                                checkStartTime = 0
+                                
+                                pcall(function()
+                                    tHum.PlatformStand = true
+                                    tHum.Sit = true
+                                    SetNetOwner:FireServer(tRoot, tRoot.CFrame)
+                                    SetNetOwner:FireServer(tRoot, tRoot.CFrame)
+                                    DestroyGrabLine:FireServer(tRoot)
+                                end)
+                                
+                                myRoot.AssemblyLinearVelocity = Vector3.zero
+                                myRoot.AssemblyAngularVelocity = Vector3.zero
+                                
+                                if grabStartTime == 0 then grabStartTime = tick() end
+                                if tick() - grabStartTime > 0.2 then
+                                    dragging = true
+                                    grabStartTime = 0
+                                    checkStartTime = tick()
+                                    local lockPos = savedPos * CFrame.new(5, 20, 4)
+                                    createBodies(tRoot, lockPos.Position)
+                                end
+                            else
+                                myRoot.CFrame = savedPos
+                                local lockPos = savedPos * CFrame.new(5, 20, 4)
+                                
+                                myRoot.AssemblyLinearVelocity = Vector3.zero
+                                myRoot.AssemblyAngularVelocity = Vector3.zero
+                                
+                                if bodyPos and bodyPos.Parent then
+                                    bodyPos.Position = lockPos.Position
+                                    if bodyGyro then
+                                        bodyGyro.CFrame = lockPos
+                                    end
+                                else
+                                    createBodies(tRoot, lockPos.Position)
+                                end
+                                
+                                tHum.PlatformStand = true
+                                
+                                pcall(function()
+                                    for i = 1, 4 do
+                                        SetNetOwner:FireServer(tRoot, lockPos)
+                                    end
+                                    DestroyGrabLine:FireServer(tRoot)
+                                end)
+                                
+                                if checkStartTime > 0 and tick() - checkStartTime > 0.2 then
+                                    local currentDist = (tRoot.Position - lockPos.Position).Magnitude
+                                    
+                                    if currentDist > 15 then
+                                        dragging = false
+                                        grabStartTime = 0
+                                        checkStartTime = 0
+                                        cleanupBodies()
+                                        myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+                                    else
+                                        checkStartTime = tick()
+                                    end
+                                end
+                            end
+                        else
+                            dragging = false
+                            grabStartTime = 0
+                            checkStartTime = 0
+                            cleanupBodies()
+                        end
+                        RunService.Heartbeat:Wait()
+                    end
+                    
+                    cleanupBodies()
+                    if myRoot then myRoot.CFrame = savedPos end
+                    
+                elseif mode == "Ownership Kick fast" or mode == "Ownership Kick For Exploiter" then
+                    local myChar = LocalPlayer.Character
+                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    if not myRoot then
+                        ownershipKickActive = false
+                        return
+                    end
+                    
+                    local savedPos = myRoot.CFrame
+                    local isGrabbing = false
+                    local startTime = nil
+                    local lastPalletTime = 0
+                    local checkStartTime = nil
+                    local grabAttemptStartTime = nil
+                    local currentTargetRoot = nil
+                    local attachments = {}
+
+                    local spawnTask = task.spawn(function()
+                        while ownershipKickActive and target and target.Parent do
+                            local tChar = target.Character
+                            local tRootActual = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                            if tRootActual then
+                                pcall(function()
+                                    SetNetOwner:FireServer(tRootActual, tRootActual.CFrame)
+                                    tRootActual.AssemblyLinearVelocity = ZERO_VECTOR
+                                    tRootActual.AssemblyAngularVelocity = ZERO_VECTOR
+                                end)
+                            end
+                            task.wait(0.02)
+                        end
+                    end)
+                    table.insert(ownershipKickConnections, spawnTask)
+
+                    local function cleanupPhysicsObjects()
+                        isGrabbing = false
+                        currentTargetRoot = nil
+                        for _, v in pairs(attachments) do
+                            if v then pcall(function() v:Destroy() end) end
+                        end
+                        attachments = {}
+                    end
+
+                    local function isTargetAlive()
+                        if not target or not target.Parent then return false end
+                        local char = target.Character
+                        if not char then return false end
+                        local hum = char:FindFirstChild("Humanoid")
+                        if not hum or hum.Health <= 0 then return false end
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        if not root then return false end
+                        if root ~= currentTargetRoot then currentTargetRoot = root end
+                        return true
+                    end
+
+                    local MyToys = Workspace:FindFirstChild(LocalPlayer.Name .. "SpawnedInToys")
+                    local pallet = MyToys and MyToys:FindFirstChild("PalletLightBrown")
+                    if not pallet and LocalPlayer:FindFirstChild("CanSpawnToy") and LocalPlayer.CanSpawnToy.Value then
+                        pcall(function()
+                            ReplicatedStorage.MenuToys.SpawnToyRemoteFunction:InvokeServer("PalletLightBrown", HIDDEN_CF, Vector3.new(0, -90, 0))
+                        end)
+                        task.wait(0.5)
+                        MyToys = Workspace:FindFirstChild(LocalPlayer.Name .. "SpawnedInToys")
+                        pallet = MyToys and MyToys:FindFirstChild("PalletLightBrown")
+                    end
+                    local soundPart = pallet and pallet:FindFirstChild("SoundPart")
+                    if not soundPart then
+                        ownershipKickActive = false
+                        return
+                    end
+
+                    modeCleanup = function()
+                        cleanupPhysicsObjects()
+                        if myRoot and myRoot.Parent then myRoot.CFrame = savedPos end
+                    end
+                    while ownershipKickActive and target do
+                        RunService.Stepped:Wait()
+                        
+                        if not isTargetAlive() then
+                            cleanupPhysicsObjects()
+                            local waitStart = tick()
+                            while ownershipKickActive and target and tick() - waitStart < 0.5 do
+                                if isTargetAlive() then break end
+                                task.wait(0.1)
+                            end
+                            if not isTargetAlive() then
+                                savedPos = myRoot.CFrame
+                                startTime = nil
+                                grabAttemptStartTime = nil
+                                checkStartTime = nil
+                            end
+                            task.wait(0.1)
+                            continue
+                        end
+
+                        myChar = LocalPlayer.Character
+                        myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                        if not myRoot then 
+                            task.wait()
+                            continue 
+                        end
+                        
+                        local tChar = target.Character
+                        local tHum = tChar and tChar:FindFirstChild("Humanoid")
+                        local tRoot = currentTargetRoot
+
+                        if tRoot then
+                            pcall(function()
+                                SetNetOwner:FireServer(tRoot, tRoot.CFrame)
+                                DestroyGrabLine:FireServer(tRoot)
+                            end)
+                            local limbs = {"Left Leg", "Right Leg", "Left Arm", "Right Arm", "Head", "Torso", "UpperTorso", "LowerTorso"}
+                            for _, limbName in ipairs(limbs) do
+                                local part = tChar:FindFirstChild(limbName)
+                                if part then 
+                                    part.Velocity = ZERO_VECTOR 
+                                    part.RotVelocity = ZERO_VECTOR 
+                                    part.CanCollide = false 
+                                end
+                            end
+                        end
+
+                        if not isGrabbing then
+                            myRoot.CFrame = tRoot.CFrame * CFrame.new(0, -6, -10)
+                            myRoot.Velocity = ZERO_VECTOR
+                            if not grabAttemptStartTime then grabAttemptStartTime = tick() end
+                            tHum.PlatformStand = true
+                            tHum.Sit = false
+                            if not startTime then startTime = tick() end
+                            if tick() - startTime > 0.05 then
+                                isGrabbing = true
+                                startTime = nil
+                                grabAttemptStartTime = nil
+                                myRoot.CFrame = savedPos
+                                myRoot.Velocity = ZERO_VECTOR
+                                
+                                local att0 = Instance.new("Attachment", tRoot)
+                                local att1 = Instance.new("Attachment", myRoot)
+                                att1.CFrame = CFrame.new(0, 12, 0)
+                                
+                                local ap = Instance.new("AlignPosition", tRoot)
+                                ap.Attachment0 = att0 
+                                ap.Attachment1 = att1
+                                ap.MaxForce = math.huge 
+                                ap.MaxVelocity = math.huge
+                                ap.Responsiveness = 200 
+                                ap.ApplyAtCenterOfMass = true
+                                
+                                local ao = Instance.new("AlignOrientation", tRoot)
+                                ao.Attachment0 = att0 
+                                ao.Attachment1 = att1
+                                ao.MaxTorque = math.huge 
+                                ao.Responsiveness = 200
+                                
+                                attachments.att0 = att0 
+                                attachments.att1 = att1
+                                attachments.ap = ap 
+                                attachments.ao = ao
+                                tHum:ChangeState(Enum.HumanoidStateType.Physics)
+                            end
+                        else
+                            if attachments.att1 then 
+                                attachments.att1.CFrame = CFrame.new(0, 16.5, 0) 
+                            end
+                            
+                            if not isTargetAlive() then
+                                cleanupPhysicsObjects()
+                                savedPos = myRoot.CFrame
+                                myRoot.CFrame = savedPos
+                                myRoot.Velocity = ZERO_VECTOR
+                                task.wait(0.1)
+                                continue
+                            end
+                            
+                            tRoot = currentTargetRoot
+                            if not checkStartTime then checkStartTime = tick() + 0.25 end
+                            if checkStartTime and tick() >= checkStartTime then
+                                local currentDistance = (myRoot.Position - tRoot.Position).Magnitude
+                                if currentDistance > 29 then
+                                    cleanupPhysicsObjects()
+                                    isGrabbing = false
+                                    startTime = tick()
+                                    grabAttemptStartTime = nil
+                                    checkStartTime = nil
+                                    savedPos = myRoot.CFrame
+                                    myRoot.CFrame = tRoot.CFrame * CFrame.new(0, -8, 0)
+                                    myRoot.Velocity = ZERO_VECTOR
+                                    pcall(function()
+                                        SetNetOwner:FireServer(tRoot, tRoot.CFrame)
+                                        DestroyGrabLine:FireServer(tRoot)
+                                    end)
+                                    task.wait()
+                                    continue
+                                end
+                            end
+                            
+                            pcall(function()
+                                SetNetOwner:FireServer(tRoot, tRoot.CFrame)
+                                DestroyGrabLine:FireServer(tRoot)
+                            end)
+                            
+                            local currentTime = tick()
+                            if currentTime - lastPalletTime >= 0.02 then
+                                lastPalletTime = currentTime
+                                soundPart.CFrame = tRoot.CFrame * CFrame.new(0, 2, 0)
+                                pcall(function()
+                                    SetNetOwner:FireServer(soundPart, soundPart.CFrame)
+                                end)
+                                task.wait()
+                                soundPart.CFrame = HIDDEN_CF
+                            end
+                        end
+                        task.wait()
+                    end
+                    
+                    cleanupPhysicsObjects()
+                    if myRoot and savedPos then 
+                        myRoot.CFrame = savedPos 
+                    end
+                end
+            end)
+        end
+    })
+end
+
+
+-- Genesis source: fling
+do
+    local KillHB = nil
+
+    -- Helpers
+    local HEIGHT_LIMIT = 100000
+    local TELEPORT_OFFSET = Vector3.new(6, -18.5, 0)
+
+    local function isTooHigh(plr)
+        local c = plr.Character
+        local hrp = c and c:FindFirstChild("HumanoidRootPart")
+        return not hrp or hrp.Position.Y > HEIGHT_LIMIT
+    end
+
+    local function setNoCollideChar(char)
+        for _, v in ipairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+
+    local CameraAnchor = {}
+    CameraAnchor.__index = CameraAnchor
+    function CameraAnchor.new() return setmetatable({}, CameraAnchor) end
+    function CameraAnchor:attach(cf)
+        self:detach()
+        local p = Instance.new("Part")
+        p.Name = "CameraAnchor"
+        p.Size = Vector3.new(0.2, 0.2, 0.2)
+        p.Transparency = 1
+        p.Anchored = true
+        p.CanCollide = false
+        p.CFrame = cf
+        p.Parent = workspace
+        self.part = p
+        local cam = workspace.CurrentCamera
+        cam.CameraType = Enum.CameraType.Custom
+        cam.CameraSubject = p
+    end
+    function CameraAnchor:detach()
+        if self.part then self.part:Destroy() self.part = nil end
+        local cam = workspace.CurrentCamera
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            cam.CameraSubject = char.Humanoid
+        else
+            cam.CameraType = Enum.CameraType.Custom
+        end
+    end
+    local cameraAnchor = CameraAnchor.new()
+
+    local function saveOriginalPos()
+        local char = Player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then char:SetAttribute("OriginalPosition", hrp:GetPivot()) end
+    end
+
+    local function getOriginalPos()
+        local char = Player.Character
+        return char and char:GetAttribute("OriginalPosition") or nil
+    end
+
+    local function scheduleReturnHome()
+        local originalPos = getOriginalPos()
+        if not originalPos then return end
+        local conn
+        conn = R.Heartbeat:Connect(function()
+            local char = Player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp:PivotTo(originalPos)
+                if GenesisState.originalFallenHeight then
+                    workspace.FallenPartsDestroyHeight = GenesisState.originalFallenHeight
+                end
+                char:SetAttribute("SavingOriginalPos", false)
+            end
+            cameraAnchor:detach()
+            conn:Disconnect()
+        end)
+    end
+
+    local function findBlobman()
+        local toys = workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+        return toys and toys:FindFirstChild("CreatureBlobman") or nil
+    end
+
+    local function spawnBlobman()
+        ReplicatedStorage.MenuToys.SpawnToyRemoteFunction:InvokeServer(
+            "CreatureBlobman",
+            Player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5),
+            Vector3.new(0, -15, 0)
+        )
+    end
+
+    local function ensureBlobman()
+        local b = findBlobman()
+        if b then return b end
+        spawnBlobman()
+        for _ = 1, 30 do
+            task.wait(0.1)
+            b = findBlobman()
+            if b then return b end
+        end
+        return nil
+    end
+
+    local function modifyTarget(root, hum)
+        if not (root and hum) or hum.Health <= 0 then return end
+        local blob = ensureBlobman()
+        if blob and blob:FindFirstChild("BlobmanSeatAndOwnerScript") then
+            local drop = blob.BlobmanSeatAndOwnerScript:FindFirstChild("CreatureDrop")
+            if drop then
+                for _, part in ipairs(hum.Parent:GetDescendants()) do
+                    if part:IsA("Weld") or part:IsA("BallSocketConstraint") then
+                        drop:FireServer(part, part)
+                    end
+                end
+            end
+        end
+        hum.Sit = false
+        hum:ChangeState(Enum.HumanoidStateType.Running)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+
+        local plr = PS:GetPlayerFromCharacter(hum.Parent)
+        if plr and plr:FindFirstChild("IsHeld") then plr.IsHeld.Value = false end
+        local rag = hum:FindFirstChild("Ragdolled")
+        if rag then rag.Value = false end
+
+        local bv = Instance.new("BodyVelocity")
+        local bav = Instance.new("BodyAngularVelocity")
+        bv.MaxForce = Vector3.new(1e7, -1e7, 1e7)
+        bv.P = 1e6
+        bv.Velocity = Vector3.new(math.random(-500, 50), -50, math.random(-50, 50))
+        bav.MaxTorque = Vector3.new(-1e7, -1e7, -1e7)
+        bav.P = 1e6
+        bav.AngularVelocity = Vector3.new(math.random(-500, 300), math.random(-300, 300), math.random(-500, 500))
+        bv.Parent = root
+        bav.Parent = root
+        hum.BreakJointsOnDeath = false
+        hum:ChangeState(Enum.HumanoidStateType.Dead)
+        task.delay(2, function()
+            if bv.Parent then bv:Destroy() end
+            if bav.Parent then bav:Destroy() end
+        end)
+    end
+
+    local function performKill()
+        if not KozMethodsUI.GetTarget() then return end
+        local target = KozMethodsUI.GetTarget()
+        local tChar = target and target.Character
+        local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+        local tHum = tChar and tChar:FindFirstChild("Humanoid")
+        local tHead = tChar and tChar:FindFirstChild("Head")
+        if not (target and tRoot and tHum and tHead) then return end
+        if isTooHigh(target) then return end
+        if tHum:GetState() == Enum.HumanoidStateType.Dead then return end
+
+        local char = Player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not (char and hrp) then return end
+
+        if not char:GetAttribute("SavingOriginalPos") then
+            saveOriginalPos()
+        end
+        char:SetAttribute("SavingOriginalPos", true)
+        GenesisState.originalFallenHeight = workspace.FallenPartsDestroyHeight
+        workspace.FallenPartsDestroyHeight = 0/0
+
+        local originalPos = getOriginalPos()
+        if originalPos then cameraAnchor:attach(originalPos) end
+
+        hrp:PivotTo(CFrame.new(tRoot.Position + TELEPORT_OFFSET))
+        setNoCollideChar(tChar)
+        ReplicatedStorage.GrabEvents.SetNetworkOwner:FireServer(tRoot, tRoot.CFrame)
+        task.wait(0.05)
+        ReplicatedStorage.GrabEvents.DestroyGrabLine:FireServer(tRoot)
+        task.wait(0.05)
+
+        if tHead:FindFirstChild("PartOwner") and tHead.PartOwner.Value == Player.Name then
+            task.wait(0.05)
+            modifyTarget(tRoot, tHum)
+        end
+        scheduleReturnHome()
+    end
+
+    KozOwnershipKickGroup:AddToggle("KozGenesisFlingGrab", {
+        Text = "Fling ( grab )",
+        Default = false,
+        Callback = function(Value)
+            if Value then
+                if KillHB then KillHB:Disconnect() end
+                KillHB = R.Heartbeat:Connect(performKill)
+            else
+                if KillHB then KillHB:Disconnect() KillHB = nil end
+                cameraAnchor:detach()
+            end
+        end
+    })
+end
+
+
+-- Genesis source: grab
+KozOwnershipKickGroup:AddToggle("KozGenesisGrabTroll", {
+	Text = "Grab Troll (spam grab)",
+	Default = false,
+	Callback = function(on)
+		kickLoopEnabled = on
+		if not on then
+			return
+		end
+		task.spawn(function()
+			local RS = game:GetService("ReplicatedStorage")
+			local RunService = game:GetService("RunService")
+			local GE = RS:WaitForChild("GrabEvents")
+			local myChar = Player.Character
+			local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+			if not myRoot then
+				Toggles.KozGenesisGrabTroll:SetValue(false)
+				return
+			end
+			local savedPos = myRoot.CFrame
+			local dragging = false
+			local grabStartTime = 0
+			while kickLoopEnabled do
+				local target = KozMethodsUI.GetTarget()
+				if not target or not target.Parent then
+					break
+				end
+				myChar = Player.Character
+				myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+				if not myRoot then
+					break
+				end
+				local tChar = target.Character
+				local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+				local tHum = tChar and tChar:FindFirstChild("Humanoid")
+				if tRoot and tHum and tHum.Health > 0 then
+                    -- стабилизация физики цели
+					tRoot.AssemblyLinearVelocity = Vector3.zero
+					tRoot.AssemblyAngularVelocity = Vector3.zero
+					tRoot.Velocity = Vector3.zero
+					if not dragging then
+                        -- =====================
+                        -- 🔥 СТАРТ КИКА (БЕЗ RAGDOLL)
+                        -- =====================
+						myRoot.CFrame = tRoot.CFrame
+						myRoot.Velocity = Vector3.zero
+						pcall(function()
+							tHum.PlatformStand = true
+							tHum.Sit = true
+							GE.SetNetworkOwner:FireServer(tRoot, myRoot.CFrame)
+							GE.CreateGrabLine:FireServer(
+                                tRoot,
+                                Vector3.zero,
+                                tRoot.Position,
+                                false
+                            )
+						end)
+						if grabStartTime == 0 then
+							grabStartTime = tick()
+						elseif tick() - grabStartTime > 0.35 then
+							dragging = true
+							grabStartTime = 0
+						end
+					else
+                        -- =====================
+                        -- 🧠 УДЕРЖАНИЕ (ТОЛЬКО ЕСЛИ RAGDOLL)
+                        -- =====================
+						if not IsRagdolled(tHum) then
+                            -- ragdoll закончился → отпускаем, но КИК НЕ ЛОМАЕМ
+							dragging = false
+							grabStartTime = 0
+							pcall(function()
+								GE.DestroyGrabLine:FireServer(tRoot)
+							end)
+							RunService.Heartbeat:Wait()
+							continue
+						end
+						myRoot.CFrame = savedPos
+						myRoot.Velocity = Vector3.zero
+						local lockPos = savedPos * CFrame.new(0, 14, 0)
+						tRoot.CFrame = lockPos
+						tRoot.Velocity = Vector3.zero
+						tRoot.RotVelocity = Vector3.zero
+						pcall(function()
+							tHum.PlatformStand = true
+							tHum.Sit = false
+                            GE.SetNetworkOwner:FireServer(tRoot, lockPos)
+							GE.DestroyGrabLine:FireServer(tRoot)
+							GE.CreateGrabLine:FireServer(
+                                tRoot,
+                                Vector3.zero,
+                                tRoot.Position,
+                                false
+                            )
+						end)
+					end
+				else
+					dragging = false
+					grabStartTime = 0
+				end
+				RunService.Heartbeat:Wait()
+			end
+
+            -- =====================
+            -- 🔁 ВОЗВРАТ В НОРМУ
+            -- =====================
+			if myRoot then
+				myRoot.CFrame = savedPos
+				myRoot.Velocity = Vector3.zero
+			end
+			kickLoopEnabled = false
+			Toggles.KozGenesisGrabTroll:SetValue(false)
+		end)
+	end
+})
+    Library:OnUnload(function()
+        kickLoopEnabled = false
+        for _, id in ipairs({
+            "KozGenesisOwnershipBasic", "KozGenesisRagdollTarget",
+            "KozGenesisOwnershipModeToggle", "KozGenesisFlingGrab", "KozGenesisGrabTroll",
+        }) do
+            local toggle = Toggles[id]
+            if toggle and toggle.Value then pcall(function() toggle:SetValue(false) end) end
+        end
+    end)
+end
+
+-- Stable visual order even though the existing engine callbacks are defined earlier.
+do
+    local ids = {
+        "KozKickMethod", "KozBlobKick", "KOZMOZGrabBlob", "LoopKickBlobToggle",
+        "LoopKickToggle", "KozGenesisKickMode", "KozGenesisKickHeight",
+    }
+    for order, id in ipairs(ids) do
+        local element = Library.Options[id] or Library.Toggles[id]
+        if element and element.Holder then element.Holder.LayoutOrder = order end
+    end
+    KozBlobmanKickGroup:Resize()
+    KozMethodsUI.Reset()
+end
 
 AttackMethodsGroupbox:AddDivider()
 AttackMethodsGroupbox:AddLabel("XZ Methods", true, Color3.fromRGB(255, 50, 50))
@@ -13268,7 +14592,7 @@ do
     local pvpSafePlatform = nil
     KBGroup:AddLabel("PVP SAFE"):AddKeyPicker("KozPvpSafe", {
         Text = "PVP SAFE",
-        Default = "F",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             local char = KozPLR.Character
@@ -13301,7 +14625,7 @@ do
     local legitPvpSafeTask = nil
     KBGroup:AddLabel("Legit PVP Safe"):AddKeyPicker("KozLegitPvpSafe", {
         Text = "Legit PVP Safe",
-        Default = "G",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             if legitPvpSafeActive then return end
@@ -13344,7 +14668,7 @@ do
     local palletPvpSafeTarget = nil
     KBGroup:AddLabel("Pallet PVP Safe"):AddKeyPicker("KozPalletPvpSafe", {
         Text = "Pallet PVP Safe",
-        Default = "H",
+        Default = "None",
         Mode = "Toggle",
         Callback = function(held)
             if held then
@@ -13518,7 +14842,7 @@ do
     local lockGrabCounter = 0
     KBGroup:AddLabel("Bring Object"):AddKeyPicker("KozBringObject", {
         Text = "Bring Object",
-        Default = "J",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             task.spawn(function()
@@ -13570,7 +14894,7 @@ do
     })
     KBGroup:AddLabel("Bring Player"):AddKeyPicker("KozBringPlayer", {
         Text = "Bring Player",
-        Default = "L",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             task.spawn(function()
@@ -13636,7 +14960,7 @@ do
     })
     KBGroup:AddLabel("Lock Grab"):AddKeyPicker("KozLockGrab", {
         Text = "Lock Grab",
-        Default = "Q",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             local grabParts = KozWS:FindFirstChild("GrabParts")
@@ -13653,7 +14977,7 @@ do
     })
     KBGroup:AddLabel("Delete All Lock Grabs"):AddKeyPicker("KozDeleteAllLockGrabs", {
         Text = "Delete All Lock Grabs",
-        Default = "I",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             for _, obj in ipairs(KozWS:GetChildren()) do
@@ -13666,7 +14990,7 @@ do
     })
     KBGroup:AddLabel("Stop Velocity"):AddKeyPicker("KozStopVelocity", {
         Text = "Stop Velocity",
-        Default = "O",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             local char = KozPLR.Character
@@ -13687,7 +15011,7 @@ do
     })
     KBGroup:AddLabel("Throw Bomb"):AddKeyPicker("KozThrowBomb", {
         Text = "Throw Bomb",
-        Default = "U",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             task.spawn(function()
@@ -13732,7 +15056,7 @@ do
     })
     KBGroup:AddLabel("Spawn Pallet"):AddKeyPicker("KozSpawnPallet", {
         Text = "Spawn Pallet",
-        Default = "Tab",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             -- eskiden "Spisok" acik degilse hicbir sey yapmiyordu; artik serbest
@@ -13777,7 +15101,7 @@ do
     setupPlatformTP()
     KBGroup:AddLabel("Platform TP"):AddKeyPicker("KozPlatformTP", {
         Text = "Platform TP",
-        Default = "Zero",
+        Default = "None",
         Mode = "Toggle",
         Callback = function()
             setupPlatformTP()
@@ -13999,7 +15323,7 @@ do
     local spamDanceChatMethod = nil
     KBGroup:AddLabel("Spam Dance"):AddKeyPicker("KozSpamDanceKey", {
         Text = "Spam Dance",
-        Default = "One",
+        Default = "None",
         Mode = "Toggle",
         Callback = function(held)
             if held then
@@ -14014,7 +15338,7 @@ do
     local spamPewChatMethod = nil
     KBGroup:AddLabel("Spam Pew"):AddKeyPicker("KozSpamPewKey", {
         Text = "Spam Pew",
-        Default = "Two",
+        Default = "None",
         Mode = "Toggle",
         Callback = function(held)
             if held then
@@ -14193,7 +15517,7 @@ do
     end
     KBGroup:AddLabel("Salto"):AddKeyPicker("KozSaltoKey", {
         Text = "Salto",
-        Default = "Three",
+        Default = "None",
         Mode = "Toggle",
         Callback = function(held)
             if not isSaltoActive then
@@ -14206,7 +15530,7 @@ do
     local zoomOrigSens = 0.2
     KBGroup:AddLabel("Zoom"):AddKeyPicker("KozZoomBind", {
         Text = "Zoom",
-        Default = "Four",
+        Default = "None",
         Mode = "Toggle",
         Callback = function(held)
             KozState.zoomActive = held
@@ -18228,13 +19552,41 @@ do
         end
         return bestPart
     end
-    FunGroup:AddDropdown("KozCloneFlingTarget", {
-        Text = "Clone Fling Object",
-        Values = {"UFO 1", "UFO 2", "Train", "Beach 1", "Beach 2", "CaveCart"},
-        Callback = function(value)
-            KozFlags.cloneFlingTarget = value
+    -- [KOZMOZ v3] musa(4) secenekleri ve islem kodu korunur.
+    -- PNG 2 duzeni: secici basligi + ok tek satir, toggle hemen altinda.
+    do
+        local dropdown = FunGroup:AddDropdown("KozCloneFlingTarget", {
+            Text = "Clone Fling Object",
+            Values = {"UFO 1", "UFO 2", "Train", "Beach 1", "Beach 2", "CaveCart"},
+            Searchable = false,
+            Callback = function(value)
+                KozFlags.cloneFlingTarget = value
+            end,
+        })
+        local holder = dropdown and dropdown.Holder
+        if holder then
+            local title = holder:FindFirstChildWhichIsA("TextLabel")
+            local display = holder:FindFirstChildWhichIsA("TextButton")
+            if title and display then
+                holder.Size = UDim2.new(1, 0, 0, 21)
+                title.Position = UDim2.fromOffset(0, 0)
+                title.Size = UDim2.new(1, -22, 1, 0)
+                title.TextYAlignment = Enum.TextYAlignment.Center
+                title.Active = false
+                display.BackgroundTransparency = 1
+                -- Secim listesi, secili oge isareti ve tiklama handler'i kalir.
+                -- Yalnizca ikinci satirdaki bos deger kutusu kaldirilir.
+                for _, child in ipairs(display:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        child.Visible = false
+                    elseif child:IsA("UIStroke") then
+                        child.Enabled = false
+                    end
+                end
+                FunGroup:Resize()
+            end
         end
-    })
+    end
     FunGroup:AddToggle("KozCloneFling", {
         Text = "Clone Fling Object",
         Default = false,
@@ -22866,49 +24218,64 @@ NotifGroup:AddToggle("DeathNotifyToggle", {
     end
 })
 
--- [KOZMOZ] Uc kisimli gecit (Lag / Packets / Line) - Server Lag kutusunun
--- bildirim satirinin hemen altinda. Uc buton ARTIK YAN YANA duruyor (sekme
--- cubugu gibi); eski hali alt alta üç satirdi. Ikon yok (kullanici istegi).
+-- [KOZMOZ UI] Lag / Packets / Line: yazi onunde ikonlu yatay sekmeler.
+-- Menu ve Server Lag kutusu acik sabit; islem toggle'lari degistirilmez.
 KozmozSectionSwitch = {
     Boxes = {},
     Buttons = {},
-    Current = nil,
+    Current = "Lag",
+    Hovered = nil,
 }
 
-KozSwitchGroup = Tabs.ServerTab:AddLeftGroupbox("Kozmoz Lag Menu")
+KozSwitchGroup = Tabs.ServerTab:AddLeftGroupbox("Kozmoz Lag Menu", nil, true, false, true)
 
+-- Renkler diger kontrollerle ayni ThemeManager semasindan gelir.
+-- FontColor: yazi/ikon, MainColor: pasif zemin, AccentColor: secili zemin.
 function KozmozSectionSwitch.Paint(activeName)
+    local function applyTheme(object, properties)
+        Library:AddToRegistry(object, properties)
+        for property, value in pairs(properties) do
+            object[property] = type(value) == "function" and value() or Library.Scheme[value]
+        end
+    end
     for key, btn in pairs(KozmozSectionSwitch.Buttons) do
-        pcall(function()
-            if key == activeName then
-                btn.BackgroundColor3 = Color3.fromRGB(255, 160, 0)
-                btn.TextColor3 = Color3.fromRGB(12, 12, 12)
-            else
-                btn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-                btn.TextColor3 = Color3.fromRGB(193, 205, 205)
+        local active = key == activeName
+        local foreground = active and "BackgroundColor" or "FontColor"
+        applyTheme(btn, {
+            BackgroundColor3 = function()
+                if KozmozSectionSwitch.Current == key then
+                    return Library.Scheme.AccentColor
+                end
+                local base = Library.Scheme.MainColor
+                if KozmozSectionSwitch.Hovered == key then
+                    return base:Lerp(Library.Scheme.FontColor, 0.08)
+                end
+                return base
+            end,
+        })
+        local content = btn:FindFirstChild("TabContent")
+        if content then
+            local label = content:FindFirstChild("TabLabel")
+            local icon = content:FindFirstChild("TabIcon")
+            if label then
+                applyTheme(label, { TextColor3 = foreground, FontFace = "Font" })
+                label.TextTransparency = active and 0 or 0.4
             end
-        end)
+            if icon then
+                applyTheme(icon, { ImageColor3 = foreground })
+                icon.ImageTransparency = active and 0 or 0.4
+            end
+        end
     end
 end
 
 local function kozToggleSection(name)
     local boxes = KozmozSectionSwitch.Boxes
-    if KozmozSectionSwitch.Current == name then
-        -- ayni secime tekrar basilinca tum kutular geri acilir
-        KozmozSectionSwitch.Current = nil
-        for _, box in pairs(boxes) do
-            pcall(function()
-                box:SetVisible(true)
-            end)
-        end
-        KozmozSectionSwitch.Paint(nil)
-        return
-    end
+    if not boxes[name] then return end
+    -- Secili sekmeye yeniden basmak secimi kaldirmaz.
     KozmozSectionSwitch.Current = name
     for key, box in pairs(boxes) do
-        pcall(function()
-            box:SetVisible(key == name)
-        end)
+        box:SetVisible(key == name)
     end
     KozmozSectionSwitch.Paint(name)
 end
@@ -22937,28 +24304,69 @@ do
         for kozSwitchIdx, kozSwitchName in ipairs({ "Lag", "Packets", "Line" }) do
             local kozSwitchBtn = Instance.new("TextButton")
             kozSwitchBtn.Name = "KozmozSwitch" .. kozSwitchName
-            kozSwitchBtn.Text = kozSwitchName
+            kozSwitchBtn.Text = "" -- Ikon + yazi asagidaki ortalanmis grupta.
             kozSwitchBtn.AutoButtonColor = false
             kozSwitchBtn.Font = Enum.Font.Code
             kozSwitchBtn.TextSize = 14
             kozSwitchBtn.Size = UDim2.new(1 / 3, -3, 1, 0)
             kozSwitchBtn.LayoutOrder = kozSwitchIdx
-            kozSwitchBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-            kozSwitchBtn.TextColor3 = Color3.fromRGB(193, 205, 205)
+            kozSwitchBtn.BackgroundColor3 = Library.Scheme.MainColor
+            kozSwitchBtn.TextColor3 = Library.Scheme.FontColor
             kozSwitchBtn.Parent = kozSwitchRow
+
+            local content = Instance.new("Frame")
+            content.Name = "TabContent"
+            content.BackgroundTransparency = 1
+            content.AnchorPoint = Vector2.new(0.5, 0.5)
+            content.Position = UDim2.fromScale(0.5, 0.5)
+            content.Size = UDim2.fromOffset(0, 18)
+            content.AutomaticSize = Enum.AutomaticSize.X
+            content.Parent = kozSwitchBtn
+
+            local contentLayout = Instance.new("UIListLayout")
+            contentLayout.FillDirection = Enum.FillDirection.Horizontal
+            contentLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            contentLayout.Padding = UDim.new(0, 6)
+            contentLayout.Parent = content
+
+            local iconNames = { Lag = "zap", Packets = "skull", Line = "git-branch" }
+            local iconData = Library:GetCustomIcon(iconNames[kozSwitchName])
+            if iconData then
+                local icon = Instance.new("ImageLabel")
+                icon.Name = "TabIcon"
+                icon.BackgroundTransparency = 1
+                icon.Size = UDim2.fromOffset(14, 14)
+                icon.LayoutOrder = 1
+                Library:ApplyLucideIcon(icon, iconData)
+                icon.ImageColor3 = Library.Scheme.FontColor
+                icon.Parent = content
+            end
+
+            local label = Instance.new("TextLabel")
+            label.Name = "TabLabel"
+            label.BackgroundTransparency = 1
+            label.Size = UDim2.fromOffset(0, 18)
+            label.AutomaticSize = Enum.AutomaticSize.X
+            label.FontFace = Library.Scheme.Font
+            label.TextSize = 14
+            label.Text = kozSwitchName
+            label.TextColor3 = kozSwitchBtn.TextColor3
+            label.LayoutOrder = 2
+            label.Parent = content
 
             local kozSwitchCorner = Instance.new("UICorner")
             kozSwitchCorner.CornerRadius = UDim.new(0, 4)
             kozSwitchCorner.Parent = kozSwitchBtn
 
             kozSwitchBtn.MouseEnter:Connect(function()
-                pcall(function()
-                    if KozmozSectionSwitch.Current ~= kozSwitchName then
-                        kozSwitchBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                    end
-                end)
+                KozmozSectionSwitch.Hovered = kozSwitchName
+                KozmozSectionSwitch.Paint(KozmozSectionSwitch.Current)
             end)
             kozSwitchBtn.MouseLeave:Connect(function()
+                if KozmozSectionSwitch.Hovered == kozSwitchName then
+                    KozmozSectionSwitch.Hovered = nil
+                end
                 KozmozSectionSwitch.Paint(KozmozSectionSwitch.Current)
             end)
             kozSwitchBtn.MouseButton1Click:Connect(function()
@@ -22979,6 +24387,7 @@ do
         end
     end
 end
+KozmozSectionSwitch.Paint(KozmozSectionSwitch.Current)
 packetLagActive = false
 packetLagTask = nil
 lagLineActive = false
@@ -23027,9 +24436,9 @@ end
 -- =====================================================================
 -- [KOZMOZ] "Server Lag" 3 KISME bolundu; gecit satiri bildirim
 --   kutusunun ("Notify when Killed") hemen ALTINA kondu:
---   Lag / Packets / Line. Buton ikonlari (bolt/bomb/target)
---   KALDIRILDI, kutu basliklari da ikonsuz. Kisma tiklayinca yalnizca o kisim
---   gorunur; ayni kisma tekrar tiklaninca uc kutu birden acilir.
+--   Lag / Packets / Line. Butonlarda zap/skull/git-branch ikonlari var.
+--   Kutu basliklari ikonsuz. Kisma tiklayinca yalnizca o kisim
+--   gorunur; tekrar tiklamak secili kismi kapatmaz. Ilk secim Lag olur.
 -- Icerik dagilimi (kullanicinin PNG siralamasiyla ayni):
 --   * Lag     : "Lag Server [USING AMOUT]" (toggle), "Just Loop-Lag",
 --               "Instant Lag Server", en altta "Lag Intensity"
@@ -23092,7 +24501,7 @@ local function kozmozLagBurst(count)
 end
 
 -- [KOZMOZ] LAG KISMI - yalnizca "Lag" butonuyla acilir
-LagGroup = Tabs.ServerTab:AddLeftGroupbox("Server Lag")
+LagGroup = Tabs.ServerTab:AddLeftGroupbox("Server Lag", nil, true, false, true)
 KozmozSectionSwitch.Boxes.Lag = LagGroup
 
 -- e axum 11024: buton olarak tasarlanmisti; kullanici istegiyle TOGGLE.
@@ -23239,7 +24648,7 @@ LagGroup:AddSlider("KozLagIntensity", {
 -- [KOZMOZ] PACKETS KISMI (hepsi musa(4)'tan) - ayrica
 -- ayri "Packet Lag" kutusu kaldirildi; ikili Line kismina tasindi.
 -- ---------------------------------------------------------------------
-KozPacketGroup = Tabs.ServerTab:AddLeftGroupbox("Lag Packets")
+KozPacketGroup = Tabs.ServerTab:AddLeftGroupbox("Lag Packets", nil, false)
 KozmozSectionSwitch.Boxes.Packets = KozPacketGroup
 
 KozmozPacketLag = {
@@ -23471,8 +24880,10 @@ do
 end
 
 -- [KOZMOZ] LINE KISMI - gecit satirindaki "Line" butonuna bagli
-ServerLagGroup = Tabs.ServerTab:AddLeftGroupbox("Server Lag Line")
+ServerLagGroup = Tabs.ServerTab:AddLeftGroupbox("Server Lag Line", nil, false)
 KozmozSectionSwitch.Boxes.Line = ServerLagGroup
+-- Sadece gorunurluk/secim: herhangi bir islem toggle'i acilmaz.
+kozToggleSection("Lag")
 -- Kullanici istegi: ayri "Packet Lag" kutusu yok; ayni ikili (Packet Lag +
 -- Packet Lag Strength) Line kutusunun divider sonrasi bolumunde duruyor,
 -- boylece hicbir eleman silinmemis oluyor.
@@ -24929,7 +26340,26 @@ ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 
 SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+-- Screenshot keybinds start unassigned; old configs cannot restore preset keys.
+-- Keys can still be assigned manually for the current session. Menu M is unchanged.
+SaveManager:SetIgnoreIndexes({
+    "MenuKeybind",
+    "KozPvpSafe",
+    "KozLegitPvpSafe",
+    "KozPalletPvpSafe",
+    "KozBringObject",
+    "KozBringPlayer",
+    "KozLockGrab",
+    "KozDeleteAllLockGrabs",
+    "KozStopVelocity",
+    "KozThrowBomb",
+    "KozSpawnPallet",
+    "KozPlatformTP",
+    "KozSpamDanceKey",
+    "KozSpamPewKey",
+    "KozSaltoKey",
+    "KozZoomBind"
+})
 
 ThemeManager:SetFolder("Kozmoz Hub")
 SaveManager:SetFolder("Kozmoz Hub")
@@ -25999,3 +27429,398 @@ task.spawn(function()
     end
     kozmozCenterWindow()
 end)
+
+-- [KOZMOZ v5] No reopen reset: the last Methods tab/category and Target/Preview
+-- selection stay intact while the hub is hidden. Startup still defaults to Kick/Blobman.
+
+-- [KOZMOZ v5] Live player preview: local avatar clones, distance, TP and camera view.
+-- No ownership/grab remotes are used by this panel.
+do
+    local Players = Services.Players
+    local LocalPlayer = Services.LocalPlayer
+    local RunService = Services.RunService
+    local State = {Cards = {}, Connections = {}, Watching = nil, Destroyed = false}
+    KozmozPlayerPreview = State
+    local savedSubject, savedCameraType
+
+    local function theme(instance, properties)
+        Library:AddToRegistry(instance, properties)
+        for property, value in pairs(properties) do
+            instance[property] = type(value) == "function" and value() or Library.Scheme[value]
+        end
+    end
+    local function new(class, properties, parent)
+        local instance = Instance.new(class)
+        for key, value in pairs(properties) do instance[key] = value end
+        instance.Parent = parent
+        return instance
+    end
+    local function disconnect(connections)
+        for _, connection in ipairs(connections) do connection:Disconnect() end
+        table.clear(connections)
+    end
+    local function root(player)
+        local char = player and player.Character
+        return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
+    end
+    local function humanoid(player)
+        local char = player and player.Character
+        return char and char:FindFirstChildOfClass("Humanoid")
+    end
+    local function notify(message)
+        Library:Notify({Title = "Player Preview", Description = message, Time = 3})
+    end
+    local status = AttackPreviewTab:AddLabel("View: kapalı", true)
+    local repaint
+
+    function State.StopView()
+        local hadView = State.Watching ~= nil
+        State.Watching = nil
+        if hadView then
+            local camera = workspace.CurrentCamera
+            if camera then
+                local subject = savedSubject
+                if not (subject and subject.Parent) then subject = humanoid(LocalPlayer) end
+                if subject then camera.CameraSubject = subject end
+                camera.CameraType = savedCameraType or Enum.CameraType.Custom
+            end
+        end
+        savedSubject, savedCameraType = nil, nil
+        status:SetText("View: kapalı")
+        if repaint then repaint() end
+    end
+
+    function State.View(player)
+        if State.Watching == player then State.StopView() return end
+        if not player or player.Parent ~= Players then return end
+        local subject = humanoid(player)
+        local camera = workspace.CurrentCamera
+        if not camera or not subject or subject.Health <= 0 then
+            notify("Oyuncunun karakteri henüz hazır değil.")
+            return
+        end
+        if not State.Watching then
+            savedSubject, savedCameraType = camera.CameraSubject, camera.CameraType
+        end
+        State.Watching = player
+        camera.CameraType = Enum.CameraType.Custom
+        camera.CameraSubject = subject
+        status:SetText("View: @" .. player.Name)
+        if repaint then repaint() end
+    end
+
+    function State.Teleport(player)
+        local mine, target = root(LocalPlayer), root(player)
+        if not mine or not target or player.Parent ~= Players then
+            notify("Işınlanmak için iki oyuncunun da karakteri hazır olmalı.")
+            return
+        end
+        local hum = humanoid(LocalPlayer)
+        if hum then hum.Sit = false end
+        mine.CFrame = target.CFrame * CFrame.new(3, 0, 3)
+        mine.AssemblyLinearVelocity = Vector3.zero
+        mine.AssemblyAngularVelocity = Vector3.zero
+    end
+
+    AttackPreviewTab:AddButton({Text = "Stop View / Kamerama Dön", Func = State.StopView})
+    local scroll = new("ScrollingFrame", {
+        Name = "KozmozPlayerCards", Size = UDim2.new(1, 0, 0, 360),
+        BackgroundTransparency = 1, BorderSizePixel = 0,
+        ScrollBarThickness = 4, ScrollingDirection = Enum.ScrollingDirection.Y,
+        CanvasSize = UDim2.fromOffset(0, 0), ClipsDescendants = true,
+    }, AttackPreviewTab.Container)
+    theme(scroll, {ScrollBarImageColor3 = "AccentColor"})
+    local grid = new("UIGridLayout", {
+        CellPadding = UDim2.fromOffset(8, 8),
+        CellSize = UDim2.new(0.5, -7, 0, 266),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Horizontal,
+        FillDirectionMaxCells = 2,
+    }, scroll)
+    local empty = AttackPreviewTab:AddLabel("Oyunda başka oyuncu yok.", true)
+    local function layout()
+        local columns = scroll.AbsoluteSize.X >= 250 and 2 or 1
+        grid.FillDirectionMaxCells = columns
+        grid.CellSize = UDim2.new(1 / columns, -(8 * (columns - 1) + 6) / columns, 0, 266)
+        scroll.CanvasSize = UDim2.fromOffset(0, grid.AbsoluteContentSize.Y + 2)
+    end
+    table.insert(State.Connections, scroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout))
+    table.insert(State.Connections, grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(layout))
+
+    local function label(parent, text, y, height, size)
+        local result = new("TextLabel", {
+            BackgroundTransparency = 1, Position = UDim2.fromOffset(7, y),
+            Size = UDim2.new(1, -14, 0, height), Text = text,
+            TextSize = size, FontFace = Library.Scheme.Font,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            TextTruncate = Enum.TextTruncate.AtEnd, RichText = false,
+        }, parent)
+        theme(result, {TextColor3 = "FontColor", FontFace = "Font"})
+        return result
+    end
+    local function button(parent, text, x)
+        local result = new("TextButton", {
+            Text = text, FontFace = Library.Scheme.Font, TextSize = 12,
+            Position = UDim2.new(x, x == 0 and 6 or 2, 1, -32),
+            Size = UDim2.new(0.5, -8, 0, 25), AutoButtonColor = true,
+            BorderSizePixel = 0,
+        }, parent)
+        new("UICorner", {CornerRadius = UDim.new(0, 4)}, result)
+        theme(result, {BackgroundColor3 = "BackgroundColor", TextColor3 = "FontColor", FontFace = "Font"})
+        return result
+    end
+    repaint = function()
+        for player, card in pairs(State.Cards) do
+            card.ViewButton.Text = State.Watching == player and "Stop" or "View"
+            card.Stroke.Color = State.Watching == player and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
+        end
+    end
+
+    local function clearModel(card)
+        if card.Model then card.Model:Destroy() end
+        card.Model = nil
+        card.Parts = {}
+        card.Viewport.Visible = false
+        card.Fallback.Visible = true
+        card.Badge.Text = "2D · Karakter bekleniyor"
+    end
+    local function updatePose(card)
+        local origin = root(card.Player)
+        if not origin or not card.Model then return end
+        for _, pair in ipairs(card.Parts) do
+            local source, clone = pair[1], pair[2]
+            if source.Parent and clone.Parent then
+                if source:IsA("BasePart") then
+                    clone.CFrame = origin.CFrame:ToObjectSpace(source.CFrame)
+                    clone.Transparency = source.Transparency
+                elseif source:IsA("Bone") then
+                    clone.Transform = source.Transform
+                end
+            end
+        end
+    end
+    local function fitCamera(card)
+        if not card.Model then return end
+        local cf, size = card.Model:GetBoundingBox()
+        local center = cf.Position
+        local aspect = math.max(0.35, card.Viewport.AbsoluteSize.X / math.max(1, card.Viewport.AbsoluteSize.Y))
+        local tangent = math.tan(math.rad(card.Camera.FieldOfView / 2))
+        local distance = math.max(size.Y / (2 * tangent), size.X / (2 * tangent * aspect), 2) + size.Z * 0.65
+        -- Roblox characters face -Z; the card camera looks at their front.
+        card.Camera.CFrame = CFrame.lookAt(center + Vector3.new(0, size.Y * 0.025, -distance), center)
+    end
+    local function buildModel(card)
+        card.Dirty = false
+        clearModel(card)
+        local character = card.Player.Character
+        if not character or not root(card.Player) then return end
+        local previous = character.Archivable
+        character.Archivable = true
+        local ok, clone = pcall(function() return character:Clone() end)
+        character.Archivable = previous
+        if not ok or not clone then return end
+        local parts = {}
+        local function map(source, copy)
+            if source:IsA("BasePart") or source:IsA("Bone") then
+                table.insert(parts, {source, copy})
+            end
+            for _, child in ipairs(copy:GetChildren()) do
+                local original = source:FindFirstChild(child.Name)
+                if original then map(original, child) end
+            end
+        end
+        map(character, clone)
+        for _, instance in ipairs(clone:GetDescendants()) do
+            if instance:IsA("LuaSourceContainer") or instance:IsA("JointInstance") or instance:IsA("Constraint") then
+                instance:Destroy()
+            elseif instance:IsA("BasePart") then
+                instance.Anchored = true
+                instance.CanCollide = false
+                instance.CanTouch = false
+                instance.CanQuery = false
+            elseif instance:IsA("Humanoid") then
+                instance.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            end
+        end
+        clone.Parent = card.World
+        card.Model = clone
+        card.Parts = parts
+        updatePose(card)
+        fitCamera(card)
+        card.Fallback.Visible = false
+        card.Viewport.Visible = true
+        card.Badge.Text = "Canlı 3D"
+    end
+    local function bindCharacter(card, character)
+        disconnect(card.CharacterConnections)
+        clearModel(card)
+        card.Dirty = true
+        card.RebuildAt = os.clock() + 0.2
+        if not character then return end
+        local function changed(instance)
+            if instance:IsA("BasePart") or instance:IsA("Accessory") or instance:IsA("Clothing")
+                or instance:IsA("BodyColors") or instance:IsA("CharacterMesh") then
+                card.Dirty = true
+                card.RebuildAt = os.clock() + 0.2
+            end
+        end
+        table.insert(card.CharacterConnections, character.DescendantAdded:Connect(changed))
+        table.insert(card.CharacterConnections, character.DescendantRemoving:Connect(changed))
+    end
+    local function updateEmpty()
+        local none = next(State.Cards) == nil
+        scroll.Visible = not none
+        empty:SetVisible(none)
+        AttackPreviewTab:Resize()
+    end
+    local function addPlayer(player)
+        if player == LocalPlayer or State.Cards[player] or State.Destroyed then return end
+        local frame = new("Frame", {
+            Name = "Player_" .. tostring(player.UserId), BorderSizePixel = 0,
+            Size = UDim2.fromOffset(140, 266), ClipsDescendants = true,
+            LayoutOrder = player.UserId % 2147483647,
+        }, scroll)
+        theme(frame, {BackgroundColor3 = "MainColor"})
+        new("UICorner", {CornerRadius = UDim.new(0, 7)}, frame)
+        local stroke = new("UIStroke", {Thickness = 1}, frame)
+        theme(stroke, {Color = function()
+            return State.Watching == player and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
+        end})
+        local card = {Player = player, Frame = frame, Stroke = stroke, Connections = {}, CharacterConnections = {}, Parts = {}}
+        State.Cards[player] = card
+        card.DisplayName = label(frame, player.DisplayName, 7, 16, 12)
+        card.Username = label(frame, "@" .. player.Name, 23, 15, 11)
+        card.Username.TextTransparency = 0.3
+        card.Distance = label(frame, "— Studs", 41, 15, 11)
+        card.Distance.TextTransparency = 0.2
+        card.Fallback = new("ImageLabel", {
+            BackgroundTransparency = 1, Position = UDim2.fromOffset(4, 60),
+            Size = UDim2.new(1, -8, 0, 155), ScaleType = Enum.ScaleType.Fit,
+            Image = "rbxthumb://type=Avatar&id=" .. player.UserId .. "&w=420&h=420",
+        }, frame)
+        card.Viewport = new("ViewportFrame", {
+            BackgroundTransparency = 1, Position = card.Fallback.Position,
+            Size = card.Fallback.Size, Visible = false,
+            Ambient = Color3.fromRGB(200, 200, 200), LightColor = Color3.new(1, 1, 1),
+            LightDirection = Vector3.new(-1, -1, -1),
+        }, frame)
+        card.World = new("WorldModel", {}, card.Viewport)
+        card.Camera = new("Camera", {FieldOfView = 32}, card.Viewport)
+        card.Viewport.CurrentCamera = card.Camera
+        card.Badge = label(frame, "2D · Karakter bekleniyor", 215, 13, 10)
+        card.Badge.TextTransparency = 0.4
+        card.TPButton = button(frame, "TP", 0)
+        card.ViewButton = button(frame, "View", 0.5)
+        table.insert(card.Connections, card.TPButton.MouseButton1Click:Connect(function() State.Teleport(player) end))
+        table.insert(card.Connections, card.ViewButton.MouseButton1Click:Connect(function() State.View(player) end))
+        table.insert(card.Connections, player.CharacterAdded:Connect(function(character) bindCharacter(card, character) end))
+        table.insert(card.Connections, player.CharacterRemoving:Connect(function() bindCharacter(card, nil) end))
+        table.insert(card.Connections, player.CharacterAppearanceLoaded:Connect(function()
+            card.Dirty = true
+            card.RebuildAt = os.clock() + 0.2
+        end))
+        table.insert(card.Connections, player:GetPropertyChangedSignal("DisplayName"):Connect(function()
+            card.DisplayName.Text = player.DisplayName
+        end))
+        table.insert(card.Connections, card.Viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+            if card.Model then fitCamera(card) end
+        end))
+        bindCharacter(card, player.Character)
+        updateEmpty()
+    end
+    local function removePlayer(player)
+        if State.Watching == player then State.StopView() end
+        local card = State.Cards[player]
+        if not card then return end
+        State.Cards[player] = nil
+        disconnect(card.Connections)
+        disconnect(card.CharacterConnections)
+        clearModel(card)
+        for _, instance in ipairs(card.Frame:GetDescendants()) do Library:RemoveFromRegistry(instance) end
+        Library:RemoveFromRegistry(card.Frame)
+        card.Frame:Destroy()
+        if not State.Destroyed then updateEmpty() end
+    end
+    table.insert(State.Connections, Players.PlayerAdded:Connect(addPlayer))
+    table.insert(State.Connections, Players.PlayerRemoving:Connect(removePlayer))
+    for _, player in ipairs(Players:GetPlayers()) do addPlayer(player) end
+    updateEmpty()
+    layout()
+    local poseTimer, infoTimer = 0, 0
+    local pendingInfo = false
+    table.insert(State.Connections, RunService.Heartbeat:Connect(function(dt)
+        poseTimer += dt
+        infoTimer += dt
+        local updateInfo = infoTimer >= 0.25
+        if updateInfo then
+            pendingInfo = true
+            infoTimer = 0
+            if State.Watching then
+                local camera = workspace.CurrentCamera
+                local subject = humanoid(State.Watching)
+                if camera then
+                    if subject and subject.Health > 0 then
+                        camera.CameraType = Enum.CameraType.Custom
+                        if camera.CameraSubject ~= subject then camera.CameraSubject = subject end
+                        status:SetText("View: @" .. State.Watching.Name)
+                    else
+                        local mine = humanoid(LocalPlayer)
+                        if mine then camera.CameraSubject = mine end
+                        status:SetText("View: @" .. State.Watching.Name .. " · yeniden doğuyor")
+                    end
+                end
+            end
+        end
+        if poseTimer < 0.1 then return end
+        poseTimer = 0
+        if not Library.Toggled or Library.ActiveTab ~= Tabs.AttackTab
+            or AttackTargetTabs.ActiveTab ~= AttackPreviewTab or AttackTargetHeader.Collapsed then return end
+        local refreshDistance = pendingInfo
+        pendingInfo = false
+        local mine = root(LocalPlayer)
+        local top, bottom = scroll.AbsolutePosition.Y, scroll.AbsolutePosition.Y + scroll.AbsoluteSize.Y
+        for player, card in pairs(State.Cards) do
+            if refreshDistance then
+                local target = root(player)
+                card.Distance.Text = mine and target
+                    and (tostring(math.floor((mine.Position - target.Position).Magnitude + 0.5)) .. " Studs")
+                    or "— Studs"
+            end
+            local y = card.Frame.AbsolutePosition.Y
+            if y + card.Frame.AbsoluteSize.Y >= top and y <= bottom then
+                if card.Dirty and os.clock() >= (card.RebuildAt or 0) then
+                    local ok = pcall(buildModel, card)
+                    if not ok then clearModel(card) end
+                end
+                if card.Model then pcall(updatePose, card) end
+            end
+        end
+    end))
+    Library:OnUnload(function()
+        State.Destroyed = true
+        State.StopView()
+        disconnect(State.Connections)
+        local players = {}
+        for player in pairs(State.Cards) do table.insert(players, player) end
+        for _, player in ipairs(players) do removePlayer(player) end
+        Library:RemoveFromRegistry(scroll)
+    end)
+end
+
+-- [KOZMOZ v5] Close single-choice dropdowns after selection, including reselecting
+-- the same value. Use the library's menu API so the arrow/search state also resets.
+do
+    for _, option in pairs(Library.Options) do
+        if option.Type == "Dropdown" and not option.Multi and not option.KozmozCloseOnSelect then
+            local original = option.RunChanged
+            if type(original) == "function" and option.Menu then
+                option.KozmozCloseOnSelect = true
+                option.RunChanged = function(self, ...)
+                    local result = original(self, ...)
+                    if self.Menu and self.Menu.Active then self.Menu:Close() end
+                    return result
+                end
+            end
+        end
+    end
+end
